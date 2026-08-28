@@ -26,4 +26,4 @@ The repository is documentation-only while the project requirements are being re
 - Use classical digital image processing methods only.
 - Keep the method explainable and reproducible.
 - Define evaluation data and metrics before implementation.
-- Record material architectural decisions in `docs/adr/`.
+- Record material design decisions in `docs/decisions.md`.
