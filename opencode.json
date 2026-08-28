@@ -3,17 +3,17 @@
   "plugin": ["oh-my-openagent"],
   "provider": {
     "agentrouter": {
-      "npm": "@ai-sdk/anthropic",
-      "name": "AgentRouter (Anthropic)",
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "AgentRouter (OpenAI Compatible)",
       "options": {
-        "baseURL": "https://agentrouter.org"
+        "baseURL": "https://agentrouter.org/v1"
       },
       "models": {
-        "claude-opus-4-6": {
-          "name": "claude-opus-4-6"
+        "glm-5.3": {
+          "name": "glm-5.3"
         }
       }
     }
   },
-  "model": "agentrouter/claude-opus-4-6"
+  "model": "agentrouter/glm-5.3"
 }
