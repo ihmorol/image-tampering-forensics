@@ -10,3 +10,5 @@ data/generated/
 reports/generated/
 outputs/
 .env
+.omo
+node_modules
