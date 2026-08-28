@@ -6,6 +6,10 @@ Keep project decisions and requirements in the documentation files under this re
 
 ## Agent skills
 
+### Agent sync contracts
+
+The architect, coder, and critic agents in `.opencode/agent/` follow the shared plan, task, report, and verdict formats in `docs/agents/contracts.md`. Dispatches, reports, and verdicts use those formats.
+
 ### Issue tracker
 
 Issues for this repo live in GitHub Issues. External pull requests are not a triage request surface. See `docs/agents/issue-tracker.md`.
@@ -16,4 +20,4 @@ Use the canonical labels `needs-triage`, `needs-info`, `ready-for-agent`, `ready
 
 ### Domain docs
 
-This is a single-context repository with one root `CONTEXT.md` and decisions in `docs/adr/`. See `docs/agents/domain.md`.
+This is a single-context repository with one root `CONTEXT.md` and decisions in `docs/decisions.md`. See `docs/agents/domain.md`.
