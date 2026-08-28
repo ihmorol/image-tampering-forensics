@@ -21,6 +21,18 @@ The repository is documentation-only while the project requirements are being re
 - **Localization mask**: the binary output identifying suspected tampered regions.
 - **Ground-truth mask**: the known tampered-region mask used for evaluation.
 
+### Agent workflow vocabulary
+
+- **Sync contracts**: the shared plan, task brief, coder report, and critic
+  verdict formats defined in `docs/agents/contracts.md`.
+- **Acceptance criterion (AC)**: an observable pass/fail condition attached to
+  a unit of work.
+- **Verdict**: the critic's PASS, FAIL, or BLOCKED decision on a task.
+- **Severity ladder**: P0 (leakage or constraint violation), P1 (unmet
+  acceptance criterion), P2 (minor violation).
+- **Tuning**: any parameter choice, including weights, thresholds, and
+  morphology settings, made on validation data only.
+
 ## Working principles
 
 - Use classical digital image processing methods only.

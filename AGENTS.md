@@ -10,6 +10,8 @@ Keep project decisions and requirements in the documentation files under this re
 
 The architect, coder, and critic agents in `.opencode/agent/` follow the shared plan, task, report, and verdict formats in `docs/agents/contracts.md`. Dispatches, reports, and verdicts use those formats.
 
+Each agent is specialized: the architect for experiment design and planning, the coder for scientific Python and image processing, and the critic for metrics and research integrity. Agents load workspace skills for domain work instead of improvising; skill assignments live in `docs/agents/contracts.md`.
+
 ### Issue tracker
 
 Issues for this repo live in GitHub Issues. External pull requests are not a triage request surface. See `docs/agents/issue-tracker.md`.
