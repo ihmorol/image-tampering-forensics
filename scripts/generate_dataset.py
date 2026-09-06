@@ -1,7 +1,7 @@
 from __future__ import annotations
-import argparse, json
+import argparse
 from pathlib import Path
-from tamper_fusion.dataset import generate_sample, save_sample
+from tamper_fusion.dataset import assign_source_disjoint_splits, generate_sample, save_sample, write_manifest
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -16,9 +16,9 @@ def main() -> int:
         sample = generate_sample(args.seed + index, kind=kind)
         image_path = args.output / f"{stem}.png"; mask_path = args.output / f"{stem}_mask.png"
         save_sample(sample, image_path, mask_path)
-        split = "validation" if index % 5 == 0 else "test"
-        manifest.append({"image": image_path.name, "mask": mask_path.name, "kind": kind, "split": split, "seed": args.seed + index})
-    (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        manifest.append({"image": image_path.name, "mask": mask_path.name, "kind": kind, "source_id": f"synthetic-source-{index}", "seed": args.seed + index})
+    records = assign_source_disjoint_splits(manifest, validation_fraction=0.2, test_fraction=0.2)
+    write_manifest(records, args.output / "manifest.json")
     return 0
 
 if __name__ == "__main__": raise SystemExit(main())
