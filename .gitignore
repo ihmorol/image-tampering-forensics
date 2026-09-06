@@ -9,6 +9,7 @@ dist/
 data/generated/
 reports/generated/
 outputs/
+references/datasets/pilot_jpeg/
 .env
 .omo
 node_modules
