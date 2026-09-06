@@ -1,0 +1,22 @@
+import numpy as np
+from tamper_fusion.fusion import evaluate_subsets, fuse_maps, tune_fusion
+from tamper_fusion.metrics import mask_metrics
+
+def test_metrics_for_partial_overlap():
+    truth = np.array([[1, 1], [0, 0]], bool); pred = np.array([[1, 0], [1, 0]], bool)
+    result = mask_metrics(pred, truth)
+    assert result["precision"] == result["recall"] == result["f1"] == 0.5
+    assert result["iou"] == 1 / 3
+
+def test_missing_cue_weights_are_renormalized():
+    maps = {"a": np.array([[0, 1]], float), "b": np.array([[1, 0]], float)}
+    result = fuse_maps(maps, {"a": True, "b": False}, weights={"a": .2, "b": .8})
+    assert result.weights == {"a": 1.0}
+
+def test_tuning_and_ablation_use_all_candidate_subsets():
+    truth = np.array([[0, 1], [0, 1]], bool)
+    good = truth.astype(float); bad = 1 - good
+    samples = [({"good": good, "bad": bad}, truth)]
+    config = tune_fusion(samples, ["good", "bad"], thresholds=[.5], weight_step=.5)
+    assert config.weights["good"] == 1.0
+    assert len(evaluate_subsets(samples, ["good", "bad"])) == 3
