@@ -54,3 +54,9 @@ def test_malformed_available_map_is_not_silently_ignored():
     samples = [({"cue": np.zeros((2, 2, 1))}, truth)]
     with np.testing.assert_raises_regex(ValueError, "two-dimensional"):
         tune_fusion(samples, ["cue"])
+
+def test_unavailable_subset_is_reported_without_fake_score():
+    truth = np.zeros((2, 2), dtype=bool)
+    rows = evaluate_subsets([({"a": np.zeros((2, 2))}, truth, {"a": False})], ["a"])
+    assert rows == [{"cues": ["a"], "mean_dice": None, "weights": {},
+                     "threshold": None, "normalization": {}, "status": "unavailable"}]

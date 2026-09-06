@@ -141,6 +141,15 @@ def evaluate_subsets(samples: Sequence[tuple], cues: Sequence[str]) -> list[dict
                 maps, truth, availability = _unpack(sample)
                 subset_samples.append(({k: maps[k] for k in subset if k in maps}, truth,
                                        {k: availability.get(k, True) for k in subset}))
+            available_count = sum(
+                any(availability.get(cue, True) and cue in maps for cue in subset)
+                for maps, _, availability in subset_samples
+            )
+            if not available_count:
+                rows.append({"cues": list(subset), "mean_dice": None,
+                             "weights": {}, "threshold": None,
+                             "normalization": {}, "status": "unavailable"})
+                continue
             config = tune_fusion(subset_samples, subset, thresholds=[0.5])
             vals = []
             for maps, truth, availability in subset_samples:
@@ -154,7 +163,7 @@ def evaluate_subsets(samples: Sequence[tuple], cues: Sequence[str]) -> list[dict
                 vals.append(_dice(result.mask, truth))
             rows.append({"cues": list(subset), "mean_dice": float(np.mean(vals)) if vals else 0.0,
                          "weights": config.weights, "threshold": config.threshold,
-                         "normalization": config.normalization})
+                         "normalization": config.normalization, "status": "evaluated"})
     return rows
 
 

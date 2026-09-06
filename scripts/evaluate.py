@@ -22,11 +22,30 @@ def main() -> int:
         records.append((row, maps, truth))
     validation = [(maps, truth) for row, maps, truth in records if row["split"] == "validation"]
     test = [(maps, truth) for row, maps, truth in records if row["split"] == "test"]
-    config = tune_fusion(validation, cues)
-    per_image = [mask_metrics(fuse_maps(maps, weights=config.weights, threshold=config.threshold, normalization=config.normalization).mask, truth) for maps, truth in test]
-    summary = {"selected_cues": list(config.cues), "weights": config.weights, "threshold": config.threshold,
-               "validation_dice": config.validation_dice, "normalization": config.normalization, "test_mean": {k: float(np.mean([r[k] for r in per_image])) for k in ["precision","recall","f1","iou","dice"]},
-               "validation_subsets": evaluate_subsets(validation, cues)}
+    subset_rows = evaluate_subsets(validation, cues)
+    valid_rows = [row for row in subset_rows if row["status"] == "evaluated"]
+    if not valid_rows:
+        raise ValueError("no cue subset is available in validation data")
+    selected = min(valid_rows, key=lambda row: (-row["mean_dice"], len(row["cues"]), row["cues"]))
+    selected_cues = tuple(selected["cues"])
+    per_image = []
+    for maps, truth in test:
+        active = {cue: selected["weights"][cue] for cue in selected_cues if cue in maps}
+        if not active:
+            per_image.append({"precision": 0.0, "recall": 0.0, "f1": 0.0, "iou": 0.0, "dice": 0.0})
+            continue
+        prediction = fuse_maps(
+            maps,
+            weights=active,
+            threshold=selected["threshold"],
+            normalization=selected["normalization"],
+        ).mask
+        per_image.append(mask_metrics(prediction, truth))
+    summary = {"selected_cues": list(selected_cues), "weights": selected["weights"],
+               "threshold": selected["threshold"], "validation_dice": selected["mean_dice"],
+               "normalization": selected["normalization"],
+               "test_mean": {k: float(np.mean([r[k] for r in per_image])) for k in ["precision","recall","f1","iou","dice"]},
+               "validation_subsets": subset_rows}
     write_static_report(args.output, summary)
     return 0
 
