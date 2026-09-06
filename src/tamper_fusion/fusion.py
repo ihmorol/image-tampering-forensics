@@ -27,7 +27,10 @@ def fit_normalization(samples, cues: Sequence[str], low: float = 1.0, high: floa
     stats = {}
     for cue in cues:
         values = []
-        for maps, _ in samples:
+        for sample in samples:
+            maps, _, availability = _unpack(sample)
+            if not availability.get(cue, True):
+                continue
             if cue in maps:
                 arr = np.asarray(maps[cue], dtype=float)
                 if arr.ndim != 2 or not np.isfinite(arr).any():
@@ -52,6 +55,7 @@ def robust_normalize(score_map: np.ndarray, low: float = 1.0, high: float = 99.0
 def fuse_maps(maps: Mapping[str, np.ndarray], availability: Mapping[str, bool] | None = None,
               *, weights: Mapping[str, float] | None = None, threshold: float = 0.5,
               normalization: Mapping[str, tuple[float, float]] | None = None) -> FusionResult:
+    if not np.isfinite(threshold) or not 0 <= threshold <= 1: raise ValueError("threshold must be finite in [0, 1]")
     availability = availability or {k: True for k in maps}
     active = [k for k, v in maps.items() if availability.get(k, True)]
     if not active:
@@ -61,14 +65,16 @@ def fuse_maps(maps: Mapping[str, np.ndarray], availability: Mapping[str, bool] |
     if len(shapes) != 1: raise ValueError("active cue maps must have identical shapes")
     raw = {k: robust_normalize(maps[k], stats=(normalization or {}).get(k)) for k in active}
     ws = {k: float(weights.get(k, 1.0)) if weights else 1.0 for k in active}
+    if any(not np.isfinite(v) for v in ws.values()): raise ValueError("weights must be finite")
     ws = {k: max(0.0, v) for k, v in ws.items()}
-    total = sum(ws.values()) or float(len(active))
+    total = sum(ws.values())
+    if total <= 0: raise ValueError("at least one active weight must be positive")
     ws = {k: v / total for k, v in ws.items()}
     fused = sum(ws[k] * raw[k] for k in active)
     return FusionResult(fused, fused >= threshold, ws, threshold)
 
 
-def tune_fusion(validation: Sequence[tuple[Mapping[str, np.ndarray], np.ndarray]], cues: Sequence[str],
+def tune_fusion(validation: Sequence[tuple], cues: Sequence[str],
                 *, thresholds: Sequence[float] | None = None, weight_step: float = 0.25) -> FusionConfig:
     thresholds = np.linspace(0.2, 0.8, 13) if thresholds is None else tuple(thresholds)
     if not validation: raise ValueError("validation samples are required")
@@ -78,9 +84,11 @@ def tune_fusion(validation: Sequence[tuple[Mapping[str, np.ndarray], np.ndarray]
     for vec in candidates:
         weights = dict(zip(cues, vec))
         for threshold in thresholds:
+            if not np.isfinite(threshold) or not 0 <= threshold <= 1: raise ValueError("thresholds must be finite in [0, 1]")
             scores = []
-            for maps, truth in validation:
-                result = fuse_maps(maps, weights=weights, threshold=float(threshold), normalization=normalization)
+            for sample in validation:
+                maps, truth, availability = _unpack(sample)
+                result = fuse_maps(maps, availability, weights=weights, threshold=float(threshold), normalization=normalization)
                 scores.append(_dice(result.mask, truth))
             value = float(np.mean(scores)) if scores else -1.0
             if value > best[0]:
@@ -88,16 +96,24 @@ def tune_fusion(validation: Sequence[tuple[Mapping[str, np.ndarray], np.ndarray]
     return FusionConfig(tuple(cues), best[1], best[2], best[0], normalization)
 
 
-def evaluate_subsets(samples: Sequence[tuple[Mapping[str, np.ndarray], np.ndarray]], cues: Sequence[str]) -> list[dict]:
+def evaluate_subsets(samples: Sequence[tuple], cues: Sequence[str]) -> list[dict]:
     rows: list[dict] = []
     for size in range(1, len(cues) + 1):
         for subset in combinations(cues, size):
+            subset_samples = []
+            for sample in samples:
+                maps, truth, availability = _unpack(sample)
+                subset_samples.append(({k: maps[k] for k in subset if k in maps}, truth,
+                                       {k: availability.get(k, True) for k in subset}))
+            config = tune_fusion(subset_samples, subset, thresholds=[0.5])
             vals = []
-            for maps, truth in samples:
-                selected = {k: maps[k] for k in subset if k in maps}
-                result = fuse_maps(selected, threshold=0.5, normalization=fit_normalization(samples, subset))
+            for maps, truth, availability in subset_samples:
+                result = fuse_maps(maps, availability, weights=config.weights, threshold=config.threshold,
+                                   normalization=config.normalization)
                 vals.append(_dice(result.mask, truth))
-            rows.append({"cues": list(subset), "mean_dice": float(np.mean(vals)) if vals else 0.0})
+            rows.append({"cues": list(subset), "mean_dice": float(np.mean(vals)) if vals else 0.0,
+                         "weights": config.weights, "threshold": config.threshold,
+                         "normalization": config.normalization})
     return rows
 
 
@@ -106,6 +122,11 @@ def _dice(pred: np.ndarray, truth: np.ndarray) -> float:
     inter = np.count_nonzero(p & t)
     denom = np.count_nonzero(p) + np.count_nonzero(t)
     return float(2 * inter / denom) if denom else 1.0
+
+def _unpack(sample):
+    if len(sample) == 2: return sample[0], sample[1], {k: True for k in sample[0]}
+    if len(sample) == 3: return sample[0], sample[1], sample[2]
+    raise ValueError("samples must be (maps, truth) or (maps, truth, availability)")
 
 def _simplex_weights(count: int, step: float) -> list[np.ndarray]:
     if count < 1 or not 0 < step <= 1:

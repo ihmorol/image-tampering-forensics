@@ -20,3 +20,16 @@ def test_tuning_and_ablation_use_all_candidate_subsets():
     config = tune_fusion(samples, ["good", "bad"], thresholds=[.5], weight_step=.5)
     assert config.weights["good"] == 1.0
     assert len(evaluate_subsets(samples, ["good", "bad"])) == 3
+
+def test_unavailable_cue_is_excluded_from_fitted_normalization():
+    truth = np.array([[0, 1]], bool)
+    samples = [({"good": truth.astype(float), "jpeg": np.array([[99., 99.]])}, truth, {"good": True, "jpeg": False})]
+    config = tune_fusion(samples, ["good", "jpeg"], thresholds=[.5], weight_step=.5)
+    assert "jpeg" not in config.normalization
+    assert config.weights["good"] == 1.0
+
+def test_invalid_fusion_parameters_are_rejected():
+    with np.testing.assert_raises(ValueError):
+        fuse_maps({"a": np.ones((1, 1))}, weights={"a": 0})
+    with np.testing.assert_raises(ValueError):
+        fuse_maps({"a": np.ones((1, 1))}, threshold=np.nan)
