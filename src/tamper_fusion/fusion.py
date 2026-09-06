@@ -88,7 +88,11 @@ def tune_fusion(validation: Sequence[tuple], cues: Sequence[str],
             scores = []
             for sample in validation:
                 maps, truth, availability = _unpack(sample)
-                result = fuse_maps(maps, availability, weights=weights, threshold=float(threshold), normalization=normalization)
+                try:
+                    result = fuse_maps(maps, availability, weights=weights, threshold=float(threshold), normalization=normalization)
+                except ValueError:
+                    scores = []
+                    break
                 scores.append(_dice(result.mask, truth))
             value = float(np.mean(scores)) if scores else -1.0
             if value > best[0]:
