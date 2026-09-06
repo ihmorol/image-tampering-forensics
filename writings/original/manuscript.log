@@ -1,12 +1,14 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.24)  6 SEP 2026 15:31
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.24)  6 SEP 2026 18:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**./manuscript.tex
-(manuscript.tex
+**./writings/original/manuscript.tex
+(writings/original/manuscript.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
-(acmart.cls
+
+(E:\University\11th_trimester\dip\image-tampering-forensics\writings\original\a
+cmart.cls
 Document Class: acmart 2026/06/27 v2.19 Typesetting articles for the Associatio
 n for Computing Machinery
 (C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/xkeyval\xkeyval.sty
@@ -756,7 +758,9 @@ Include comment 'anonsuppress'
 ex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count337
-) (manuscript.aux)
+)
+(E:\University\11th_trimester\dip\image-tampering-forensics\writings\original\m
+anuscript.aux)
 \openout1 = `manuscript.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/nxlmi/m/it on input line 24.
@@ -904,7 +908,10 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             See the microtype manual for details.
 Package hyperref Info: Link coloring OFF on input line 24.
 
-(manuscript.out) (manuscript.out)
+(E:\University\11th_trimester\dip\image-tampering-forensics\writings\original\m
+anuscript.out)
+(E:\University\11th_trimester\dip\image-tampering-forensics\writings\original\m
+anuscript.out)
 \@outlinefile=\write4
 \openout4 = `manuscript.out'.
 
@@ -1064,7 +1071,7 @@ LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/it' will be
 (Font)              scaled to size 9.0pt on input line 70.
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Underfull \vbox (badness 1137) has occurred while \output is active []
 
 
 
@@ -1083,7 +1090,11 @@ ic seeds, doc-u-mented command-
 \openout3 = `comment.cut'.
 
  Comment 'acks' writing to comment.cut.
-Straight input of comment.cut. (comment.cut) (manuscript.bbl
+Straight input of comment.cut.
+(E:\University\11th_trimester\dip\image-tampering-forensics\writings\original\c
+omment.cut)
+(E:\University\11th_trimester\dip\image-tampering-forensics\writings\original\m
+anuscript.bbl
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 7.0pt on input line 48.
 )
@@ -1114,7 +1125,9 @@ File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 (C:\Users\User\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
 ) [4.4{C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/libertine/lb
-tn_7grukw.enc}] (manuscript.aux)
+tn_7grukw.enc}]
+(E:\University\11th_trimester\dip\image-tampering-forensics\writings\original\m
+anuscript.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-12-24>
@@ -1123,13 +1136,13 @@ Package rerunfilecheck Info: File `manuscript.out' has not changed.
 (rerunfilecheck)             Checksum: 2BFBD5F5CACB3DB9B9F7B890876A0FA5;5496.
  ) 
 Here is how much of TeX's memory you used:
- 21565 strings out of 467871
- 350980 string characters out of 5418860
- 848110 words of memory out of 5000000
+ 21566 strings out of 467871
+ 351711 string characters out of 5418860
+ 848798 words of memory out of 5000000
  49509 multiletter control sequences out of 15000+600000
  749105 words of font info for 307 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 90i,12n,131p,1009b,610s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,12n,131p,1027b,610s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/newtx/Liberti
 neMathMI.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/ne
 wtx/LibertineMathMI7.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/typ
@@ -1143,7 +1156,8 @@ rtine/LinLibertineTI.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/typ
 e1/public/newtx/txexs.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/ty
 pe1/public/newtx/txmiaX.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/
 type1/public/newtx/txsys.pfb>
-Output written on manuscript.pdf (4 pages, 483409 bytes).
+Output written on E:\University\11th_trimester\dip\image-tampering-forensics\wr
+itings\original\manuscript.pdf (4 pages, 483867 bytes).
 PDF statistics:
  316 PDF objects out of 1000 (max. 8388607)
  84 named destinations out of 1000 (max. 500000)

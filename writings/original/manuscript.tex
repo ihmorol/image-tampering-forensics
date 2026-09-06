@@ -77,7 +77,7 @@ JPEG-based methods exploit a different trace. Farid's JPEG ghost method tests re
 Resampling methods provide a third evidence domain. Popescu and Farid detected periodic traces caused by interpolation and geometric editing \cite{popescu2005}. This cue is complementary in principle, but it is conditional: a manipulation may leave no measurable resampling trace. A survey of blind forgery detection methods provides the broader taxonomy and reinforces the need to state detector assumptions explicitly \cite{qazi2013}.
 
 \subsection{Gap Analysis}
-The literature contains strong individual cues, but it does not make the smallest useful combination obvious for this controlled setting. JPEG ghosts and block-grid statistics may be correlated because both depend on compression history. Copy-move and resampling cues rely on different mechanisms, but either may be absent for a given edit. Therefore, the gap addressed here is an empirical one: a fair, interpretable comparison of candidate cue subsets under the same data split, localization metrics, stress conditions, and computational budget.
+The literature contains strong individual cues, but it does not make the smallest useful combination obvious for this controlled setting. JPEG ghosts and block-grid statistics may be correlated because both depend on compression history. Copy-move evaluation also needs negative controls with naturally similar objects, as emphasized by the COVERAGE database cite{wen2016}. Copy-move and resampling cues rely on different mechanisms, but either may be absent for a given edit. Therefore, the gap addressed here is an empirical one: a fair, interpretable comparison of candidate cue subsets under the same data split, localization metrics, stress conditions, and computational budget.
 
 \subsection{Summary}
 The review leads to a candidate-pool design. The final detector set is selected by incremental validation gain and robustness, not by assuming that every available cue is complementary.
@@ -120,7 +120,7 @@ For JPEG-compatible inputs, the detector recompresses the image at a documented 
 The resampling detector estimates local prediction errors and searches for periodic correlations associated with interpolation. The map is spatially smoothed only with parameters fixed before test evaluation. The detector is interpreted as evidence of geometric editing, not as a general splice detector.
 
 \subsubsection{Block-Grid Cue}
-The block-grid candidate measures local changes in statistics aligned with 8x8 JPEG blocks. It is retained only if its validation-set contribution remains after the compression-history cue is present. This design makes redundancy an explicit experimental result.
+The block-grid candidate measures local changes in statistics aligned with 8x8 JPEG blocks. It is retained only if its validation-set contribution remains after the compression-history cue is present. This design makes redundancy an explicit experimental result. The current implementation is described as a block-aligned anomaly heuristic, not as a complete reproduction of a double-JPEG detector.
 
 \subsubsection{Normalization and Fusion}
 Each available map is scaled with robust percentiles computed on the validation split. The equal-weight baseline is
@@ -130,7 +130,7 @@ Each available map is scaled with robust percentiles computed on the validation 
 where $A$ is the set of available cues. A second validation-only variant learns nonnegative weights $w_k$ with $\sum_k w_k=1$. The same validation protocol selects the map threshold and morphological cleanup settings. The test split is not used for any of these choices.
 
 \subsubsection{Localization and Evaluation}
-The fused map is thresholded and cleaned with connected-component and morphology rules fixed on validation data. We report pixel precision, recall, F1, IoU, and Dice. We also report image-level detection, cue runtime, end-to-end runtime, and results by manipulation type. Paired bootstrap intervals will quantify uncertainty in differences between the strongest single cue and each fusion variant.
+The fused map is thresholded and cleaned with connected-component and morphology rules fixed on validation data. We report pixel precision, recall, F1, IoU, and Dice. We also report image-level detection, cue runtime, end-to-end runtime, and results by manipulation type. Paired bootstrap intervals are required for the publication-scale benchmark comparison; the pilot record currently reports point estimates only.
 
 \subsection{Project Plan}
 The project is organized into four stages: literature and protocol approval; controlled data generation; detector and fusion implementation; and held-out evaluation with report generation. No implementation result is used to tune the manuscript's claims before the corresponding experiment is recorded.
@@ -142,21 +142,21 @@ The work is divided into literature and protocol review, detector implementation
 The design treats cue selection as the main scientific variable. It preserves the interpretability of classical detectors while making complementarity measurable.
 
 \section{Implementation and Results}
-This chapter will contain the implementation evidence. The current manuscript is a pre-experiment draft, so it records the protocol without inventing measurements.
+This chapter records the implementation evidence available after the first controlled run. It separates the deterministic pilot from the public-benchmark evaluation so that pilot measurements are not presented as general forensic performance.
 
 \subsection{Environment Setup}
 The planned implementation uses Python with OpenCV, NumPy, scikit-image, Pillow, SciPy, Matplotlib, and scikit-learn for metrics and confidence intervals. The command-line environment, package versions, image dimension limit, random seeds, and output schema will be recorded with each evaluation run.
 
 \subsection{Testing and Evaluation}
-The dataset will contain 30--50 source images and approximately 120--200 altered images. It will include copy-move, splicing, object removal, geometric edits, and recompression cases with a binary mask for each localized change. Source images will be split before manipulation generation so related images do not cross the validation and test boundary.
+The implementation includes a deterministic pilot with 40 independent source identities and four manipulation types. The project also includes provenance records for the official CoMoFoD examples and the COVERAGE paper. The complete public-benchmark run must use the original binary masks and source-disjoint splits; examples without masks are reserved for detector sanity checks.
 
 The evaluation will include individual cues, all pairwise combinations, the selected subset, and the full candidate pool. Stress tests will apply JPEG recompression, resizing, Gaussian blur, and additive Gaussian noise. The primary comparison is the difference between the strongest individual cue and each fusion variant on the held-out test split.
 
 \subsection{Results and Discussion}
-The final version will report numerical results in compact tables and show representative evidence maps. No result is reported in this draft. The discussion will separate improvements that are consistent across manipulation types from improvements caused by one cue-specific subset. It will also report cases where fusion increases false positives or adds runtime without improving localization.
+In the controlled pilot, validation selected JPEG history, resampling, and block-grid cues with weights 0.25, 0.25, and 0.50. The selected subset reached validation Dice 0.1875 and held-out pilot Dice 0.2062. Per-type held-out Dice was 0.1355 for copy-move, 0.2890 for splicing, 0.1218 for object replacement, and 0.2785 for geometric editing. These values are limited to the pilot generator and JPEG quality-88 condition. They do not support a universal superiority claim. The complete public-benchmark evaluation must add confidence intervals, stress tests, and comparisons with the strongest single cue.
 
 \subsection{Summary}
-The results chapter is deliberately incomplete until the implementation branch produces reproducible held-out measurements. This prevents planned behavior from being presented as observed evidence.
+The result record is reproducible, but it is not the final benchmark result. This distinction prevents controlled pilot behavior from being presented as observed performance on natural public data.
 
 \section{Standards and Design Constraints}
 This chapter records the standards and practical constraints that shape the project.

@@ -133,3 +133,24 @@ assumptions.
 5. The final test must be stratified by manipulation type and stress condition.
 6. The paper must report failures caused by missing JPEG history, weak keypoint
    texture, absent resampling traces, and uniform recompression.
+
+## Local source verification
+
+The local copies of Farid (2009), Popescu and Farid (2005), and Wen et al.
+(2016) were downloaded from author or institutional hosts and checked as PDF
+files before use. The Popescu--Farid paper describes periodic correlations from
+interpolation and explicitly evaluates TIFF, JPEG, and GIF conditions. The
+Farid paper defines the JPEG ghost response by recompressing at candidate
+qualities and comparing the resulting error profile; it also discusses DCT
+quantization and JPEG block-lattice alignment. These details constrain the
+implementation terminology: the current JPEG cue is a pixel-domain
+recompression approximation, while the current resampling cue is a local FFT
+screening method inspired by the published periodic-correlation test.
+
+The COVERAGE paper confirms that copy-move evaluation must include genuine
+similar objects and separate duplicated and forged masks. The project therefore
+uses the official CoMoFoD examples for detector sanity checks only and reserves
+quantitative claims for datasets with verified binary masks. The complete
+CoMoFoD archive and the author-controlled COVERAGE release are documented in
+`references/datasets/README.md`; they are not silently replaced by third-party
+reuploads.
