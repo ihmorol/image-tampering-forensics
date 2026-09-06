@@ -1,0 +1,168 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{10}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{} and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showURL}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showURL #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[Amerini et~al\mbox{.}(2011)]%
+        {amerini2011}
+\bibfield{author}{\bibinfo{person}{Irene Amerini}, \bibinfo{person}{Lamberto
+  Ballan}, \bibinfo{person}{Roberto Caldelli}, \bibinfo{person}{Alberto
+  Del~Bimbo}, {and} \bibinfo{person}{Giuseppe Serra}.}
+  \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{A SIFT-Based Forensic Method for Copy-Move Attack
+  Detection and Transformation Recovery}.
+\newblock \bibinfo{journal}{\emph{IEEE Transactions on Information Forensics
+  and Security}} \bibinfo{volume}{6}, \bibinfo{number}{3}
+  (\bibinfo{year}{2011}), \bibinfo{pages}{1099--1110}.
+\newblock
+\href{https://doi.org/10.1109/TIFS.2011.2129512}{doi:\nolinkurl{10.1109/TIFS.2011.2129512}}
+
+
+\bibitem[Bianchi and Piva(2012)]%
+        {bianchi2012}
+\bibfield{author}{\bibinfo{person}{Tiziano Bianchi} {and}
+  \bibinfo{person}{Alessandro Piva}.} \bibinfo{year}{2012}\natexlab{}.
+\newblock \showarticletitle{Image Forgery Localization via Block-Grained
+  Analysis of JPEG Artifacts}.
+\newblock \bibinfo{journal}{\emph{IEEE Transactions on Information Forensics
+  and Security}} \bibinfo{volume}{7}, \bibinfo{number}{3}
+  (\bibinfo{year}{2012}), \bibinfo{pages}{1003--1017}.
+\newblock
+\href{https://doi.org/10.1109/TIFS.2012.2187516}{doi:\nolinkurl{10.1109/TIFS.2012.2187516}}
+
+
+\bibitem[Christlein et~al\mbox{.}(2012)]%
+        {christlein2012}
+\bibfield{author}{\bibinfo{person}{Vincent Christlein},
+  \bibinfo{person}{Christian Riess}, \bibinfo{person}{Johannes Jordan},
+  \bibinfo{person}{Corinna Riess}, {and} \bibinfo{person}{Elli Angelopoulou}.}
+  \bibinfo{year}{2012}\natexlab{}.
+\newblock \showarticletitle{An Evaluation of Popular Copy-Move Forgery
+  Detection Approaches}.
+\newblock \bibinfo{journal}{\emph{IEEE Transactions on Information Forensics
+  and Security}} \bibinfo{volume}{7}, \bibinfo{number}{6}
+  (\bibinfo{year}{2012}), \bibinfo{pages}{1841--1854}.
+\newblock
+\href{https://doi.org/10.1109/TIFS.2012.2218597}{doi:\nolinkurl{10.1109/TIFS.2012.2218597}}
+
+
+\bibitem[Fan and de~Queiroz(2003)]%
+        {fan2003}
+\bibfield{author}{\bibinfo{person}{Zhigang Fan} {and}
+  \bibinfo{person}{Ricardo~L. de Queiroz}.} \bibinfo{year}{2003}\natexlab{}.
+\newblock \showarticletitle{Identification of Bitmap Compression History: JPEG
+  Detection and Quantizer Estimation}.
+\newblock \bibinfo{journal}{\emph{IEEE Transactions on Image Processing}}
+  \bibinfo{volume}{12}, \bibinfo{number}{2} (\bibinfo{year}{2003}),
+  \bibinfo{pages}{230--235}.
+\newblock
+\href{https://doi.org/10.1109/TIP.2002.807361}{doi:\nolinkurl{10.1109/TIP.2002.807361}}
+
+
+\bibitem[Farid(2009)]%
+        {farid2009}
+\bibfield{author}{\bibinfo{person}{Hany Farid}.}
+  \bibinfo{year}{2009}\natexlab{}.
+\newblock \showarticletitle{Exposing Digital Forgeries From JPEG Ghosts}.
+\newblock \bibinfo{journal}{\emph{IEEE Transactions on Information Forensics
+  and Security}} \bibinfo{volume}{4}, \bibinfo{number}{1}
+  (\bibinfo{year}{2009}), \bibinfo{pages}{154--160}.
+\newblock
+\href{https://doi.org/10.1109/TIFS.2008.2012215}{doi:\nolinkurl{10.1109/TIFS.2008.2012215}}
+
+
+\bibitem[Fridrich et~al\mbox{.}(2003)]%
+        {fridrich2003}
+\bibfield{author}{\bibinfo{person}{Jessica Fridrich}, \bibinfo{person}{David
+  Soukal}, {and} \bibinfo{person}{Jan Luk{\'a}{\v{s}}}.}
+  \bibinfo{year}{2003}\natexlab{}.
+\newblock \showarticletitle{Detection of Copy-Move Forgery in Digital Images}.
+  In \bibinfo{booktitle}{\emph{Proceedings of the Digital Forensic Research
+  Workshop}}. \bibinfo{pages}{55--61}.
+\newblock
+
+
+\bibitem[Popescu and Farid(2005)]%
+        {popescu2005}
+\bibfield{author}{\bibinfo{person}{Alin~C. Popescu} {and} \bibinfo{person}{Hany
+  Farid}.} \bibinfo{year}{2005}\natexlab{}.
+\newblock \showarticletitle{Exposing Digital Forgeries by Detecting Traces of
+  Resampling}.
+\newblock \bibinfo{journal}{\emph{IEEE Transactions on Signal Processing}}
+  \bibinfo{volume}{53}, \bibinfo{number}{2} (\bibinfo{year}{2005}),
+  \bibinfo{pages}{758--767}.
+\newblock
+\href{https://doi.org/10.1109/TSP.2004.839932}{doi:\nolinkurl{10.1109/TSP.2004.839932}}
+
+
+\bibitem[Qazi et~al\mbox{.}(2013)]%
+        {qazi2013}
+\bibfield{author}{\bibinfo{person}{Taimur Qazi}, \bibinfo{person}{Khurram
+  Hayat}, \bibinfo{person}{Syed~A. Khan}, {and} \bibinfo{person}{Sajjad~A.
+  Madani}.} \bibinfo{year}{2013}\natexlab{}.
+\newblock \showarticletitle{Survey on Blind Image Forgery Detection}.
+\newblock \bibinfo{journal}{\emph{IET Image Processing}}
+  (\bibinfo{year}{2013}).
+\newblock
+\href{https://doi.org/10.1049/iet-ipr.2012.0388}{doi:\nolinkurl{10.1049/iet-ipr.2012.0388}}
+
+
+\bibitem[Verma et~al\mbox{.}(2023)]%
+        {verma2023}
+\bibfield{author}{\bibinfo{person}{Vinay Verma}, \bibinfo{person}{Deepak
+  Singh}, {and} \bibinfo{person}{Nitin Khanna}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Block-level Double JPEG Compression Detection for
+  Image Forgery Localization}.
+\newblock \bibinfo{journal}{\emph{Multimedia Tools and Applications}}
+  (\bibinfo{year}{2023}), \bibinfo{pages}{9949--9971}.
+\newblock
+\href{https://doi.org/10.1007/s11042-023-15942-5}{doi:\nolinkurl{10.1007/s11042-023-15942-5}}
+
+
+\bibitem[Wang et~al\mbox{.}(2022)]%
+        {wang2022}
+\bibfield{author}{\bibinfo{person}{Menglu Wang}, \bibinfo{person}{Xueyang Fu},
+  \bibinfo{person}{Jiawei Liu}, {and} \bibinfo{person}{Zheng-Jun Zha}.}
+  \bibinfo{year}{2022}\natexlab{}.
+\newblock \showarticletitle{JPEG Compression-aware Image Forgery Localization}.
+  In \bibinfo{booktitle}{\emph{Proceedings of the 30th ACM International
+  Conference on Multimedia}}. \bibinfo{pages}{5871--5879}.
+\newblock
+\href{https://doi.org/10.1145/3503161.3547749}{doi:\nolinkurl{10.1145/3503161.3547749}}
+
+
+\end{thebibliography}

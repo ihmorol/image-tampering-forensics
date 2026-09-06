@@ -1,0 +1,65 @@
+This is BibTeX, Version 0.99e
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: manuscript.aux
+Reallocating 'name_of_file' (item size: 1) to 21 items.
+The style file: ACM-Reference-Format.bst
+Reallocating 'name_of_file' (item size: 1) to 11 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'wiz_functions' (item size: 4) to 6000 items.
+Database file #1: references.bib
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'wiz_functions' (item size: 4) to 9000 items.
+Reallocating 'glb_str_end' (item size: 4) to 20 items.
+Reallocating 'glb_str_ptr' (item size: 4) to 20 items.
+Reallocating 'global_strs' (item size: 1) to 4000000 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Warning--empty publisher in fridrich2003
+Warning--empty address in fridrich2003
+Warning--no number and no volume in qazi2013
+Warning--page numbers missing in both pages and numpages fields in qazi2013
+Warning--no number and no volume in verma2023
+Warning--empty publisher in wang2022
+Warning--empty address in wang2022
+You've used 10 entries,
+            6273 wiz_defined-function locations,
+            1581 strings with 20063 characters,
+and the built_in function-call counts, 12728 in all, are:
+= -- 1927
+> -- 344
+< -- 0
++ -- 119
+- -- 121
+* -- 860
+:= -- 1129
+add.period$ -- 50
+call.type$ -- 10
+change.case$ -- 71
+chr.to.int$ -- 10
+cite$ -- 17
+duplicate$ -- 1067
+empty$ -- 749
+format.name$ -- 157
+if$ -- 3277
+int.to.chr$ -- 2
+int.to.str$ -- 1
+missing$ -- 42
+newline$ -- 126
+num.names$ -- 70
+pop$ -- 372
+preamble$ -- 1
+purify$ -- 151
+quote$ -- 0
+skip$ -- 383
+stack$ -- 0
+substring$ -- 1048
+swap$ -- 122
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 188
+warning$ -- 7
+while$ -- 73
+width$ -- 0
+write$ -- 234
+(There were 7 warnings)
