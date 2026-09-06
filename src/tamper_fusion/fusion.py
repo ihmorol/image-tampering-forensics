@@ -79,10 +79,15 @@ def tune_fusion(validation: Sequence[tuple], cues: Sequence[str],
     thresholds = np.linspace(0.2, 0.8, 13) if thresholds is None else tuple(thresholds)
     if not validation: raise ValueError("validation samples are required")
     normalization = fit_normalization(validation, cues)
+    globally_available = {cue: any(_unpack(sample)[2].get(cue, True) and cue in _unpack(sample)[0] for sample in validation) for cue in cues}
     candidates = _simplex_weights(len(cues), weight_step)
     best = (-1.0, None, 0.5)
     for vec in candidates:
         weights = dict(zip(cues, vec))
+        weights = {cue: (value if globally_available[cue] else 0.0) for cue, value in weights.items()}
+        total_weight = sum(weights.values())
+        if total_weight <= 0: continue
+        weights = {cue: value / total_weight for cue, value in weights.items()}
         for threshold in thresholds:
             if not np.isfinite(threshold) or not 0 <= threshold <= 1: raise ValueError("thresholds must be finite in [0, 1]")
             scores = []
