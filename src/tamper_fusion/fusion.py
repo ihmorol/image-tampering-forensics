@@ -33,8 +33,10 @@ def fit_normalization(samples, cues: Sequence[str], low: float = 1.0, high: floa
                 continue
             if cue in maps:
                 arr = np.asarray(maps[cue], dtype=float)
-                if arr.ndim != 2 or not np.isfinite(arr).any():
-                    continue
+                if arr.ndim != 2:
+                    raise ValueError(f"cue map '{cue}' must be two-dimensional")
+                if not np.isfinite(arr).all():
+                    raise ValueError(f"cue map '{cue}' contains non-finite values")
                 values.append(arr[np.isfinite(arr)])
         if values:
             flat = np.concatenate(values)
@@ -63,8 +65,18 @@ def fuse_maps(maps: Mapping[str, np.ndarray], availability: Mapping[str, bool] |
         return FusionResult(np.zeros(shape), np.zeros(shape, dtype=bool), {}, threshold)
     shapes = {np.asarray(maps[k]).shape for k in active}
     if len(shapes) != 1: raise ValueError("active cue maps must have identical shapes")
+    for cue in active:
+        array = np.asarray(maps[cue])
+        if array.ndim != 2:
+            raise ValueError(f"cue map '{cue}' must be two-dimensional")
+        if not np.isfinite(array).all():
+            raise ValueError(f"cue map '{cue}' contains non-finite values")
     raw = {k: robust_normalize(maps[k], stats=(normalization or {}).get(k)) for k in active}
-    ws = {k: float(weights.get(k, 1.0)) if weights else 1.0 for k in active}
+    ws = {
+        k: float(weights[k]) if weights is not None and k in weights
+        else (1.0 if weights is None else 0.0)
+        for k in active
+    }
     if any(not np.isfinite(v) for v in ws.values()): raise ValueError("weights must be finite")
     ws = {k: max(0.0, v) for k, v in ws.items()}
     total = sum(ws.values())
@@ -80,6 +92,8 @@ def tune_fusion(validation: Sequence[tuple], cues: Sequence[str],
     if not validation: raise ValueError("validation samples are required")
     normalization = fit_normalization(validation, cues)
     globally_available = {cue: any(_unpack(sample)[2].get(cue, True) and cue in _unpack(sample)[0] for sample in validation) for cue in cues}
+    if not any(globally_available.values()):
+        raise ValueError("no candidate cue is available in validation data")
     candidates = _simplex_weights(len(cues), weight_step)
     best = (-1.0, None, 0.5)
     for vec in candidates:
@@ -93,16 +107,29 @@ def tune_fusion(validation: Sequence[tuple], cues: Sequence[str],
             scores = []
             for sample in validation:
                 maps, truth, availability = _unpack(sample)
-                try:
-                    result = fuse_maps(maps, availability, weights=weights, threshold=float(threshold), normalization=normalization)
-                except ValueError:
-                    scores = []
-                    break
+                active = [cue for cue in maps if availability.get(cue, True)]
+                effective = {cue: weights[cue] for cue in active if weights.get(cue, 0.0) > 0.0}
+                if not effective:
+                    scores.append(0.0)
+                    continue
+                result = fuse_maps(
+                    maps,
+                    availability,
+                    weights=effective,
+                    threshold=float(threshold),
+                    normalization=normalization,
+                )
                 scores.append(_dice(result.mask, truth))
             value = float(np.mean(scores)) if scores else -1.0
             if value > best[0]:
                 best = (value, weights, float(threshold))
-    return FusionConfig(tuple(cues), best[1], best[2], best[0], normalization)
+    if best[1] is None:
+        raise ValueError("no candidate cue is available in the validation samples")
+    selected_weights = {
+        cue: weight for cue, weight in best[1].items()
+        if globally_available[cue] and weight > 0.0
+    }
+    return FusionConfig(tuple(cues), selected_weights, best[2], best[0], normalization)
 
 
 def evaluate_subsets(samples: Sequence[tuple], cues: Sequence[str]) -> list[dict]:
@@ -117,7 +144,12 @@ def evaluate_subsets(samples: Sequence[tuple], cues: Sequence[str]) -> list[dict
             config = tune_fusion(subset_samples, subset, thresholds=[0.5])
             vals = []
             for maps, truth, availability in subset_samples:
-                result = fuse_maps(maps, availability, weights=config.weights, threshold=config.threshold,
+                active = [cue for cue in maps if availability.get(cue, True)]
+                effective = {cue: config.weights[cue] for cue in active if config.weights.get(cue, 0.0) > 0.0}
+                if not effective:
+                    vals.append(0.0)
+                    continue
+                result = fuse_maps(maps, availability, weights=effective, threshold=config.threshold,
                                    normalization=config.normalization)
                 vals.append(_dice(result.mask, truth))
             rows.append({"cues": list(subset), "mean_dice": float(np.mean(vals)) if vals else 0.0,

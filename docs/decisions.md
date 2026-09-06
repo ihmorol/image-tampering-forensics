@@ -21,4 +21,11 @@
   this remains a hypothesis to test, not a result.
 - Results will be delivered through a command-line workflow and static HTML
   reports. A web application and backend are not planned.
-- Implementation begins only after the team approves the requirements.
+- The implementation branch is approved for a bounded prototype. The prototype
+  evaluates the four-cue candidate pool and selects a subset from validation
+  ablations. It must not report universal superiority or treat heuristic JPEG
+  responses as proof of authenticity.
+- The included synthetic generator is a deterministic smoke-test fixture, not a
+  substitute for a natural-image benchmark. Final claims require source-disjoint
+  images, authentic JPEG controls, recompression stress tests, and held-out
+  per-cue ablations.

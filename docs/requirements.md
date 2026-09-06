@@ -103,11 +103,13 @@ implementation begins.
 ## Completion criteria
 
 The project is complete when the held-out evaluation runs reproducibly, the
-fused system is compared fairly with all three individual cues, representative
-reports are generated, limitations are documented, and every team member can
-explain the full pipeline and their assigned contribution.
+fused system is compared fairly with every candidate cue and subset,
+representative reports are generated, limitations are documented, and every
+team member can explain the full pipeline and their assigned contribution.
 
 ## Approval gate
 
-No project code should be added until the team reviews and approves this
-requirements document and resolves any instructor feedback about deliverables.
+The candidate-pool requirements are approved for a bounded prototype on the
+implementation branch. The prototype must remain classical, validation-driven,
+and explicit about provisional detector heuristics. Public benchmark claims or
+new cue families require a new decision record.

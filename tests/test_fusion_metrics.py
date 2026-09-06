@@ -33,3 +33,24 @@ def test_invalid_fusion_parameters_are_rejected():
         fuse_maps({"a": np.ones((1, 1))}, weights={"a": 0})
     with np.testing.assert_raises(ValueError):
         fuse_maps({"a": np.ones((1, 1))}, threshold=np.nan)
+
+def test_zero_weight_cue_stays_excluded():
+    maps = {
+        "good": np.array([[0.0, 1.0], [0.0, 1.0]]),
+        "bad": np.array([[1.0, 0.0], [1.0, 0.0]]),
+    }
+    result = fuse_maps(maps, weights={"good": 1.0}, threshold=0.5)
+    assert result.weights == {"good": 1.0, "bad": 0.0}
+    assert np.array_equal(result.mask, maps["good"].astype(bool))
+
+def test_all_unavailable_validation_is_rejected():
+    truth = np.zeros((2, 2), dtype=bool)
+    samples = [({"jpeg": np.zeros((2, 2))}, truth, {"jpeg": False})]
+    with np.testing.assert_raises_regex(ValueError, "no candidate cue"):
+        tune_fusion(samples, ["jpeg"])
+
+def test_malformed_available_map_is_not_silently_ignored():
+    truth = np.zeros((2, 2), dtype=bool)
+    samples = [({"cue": np.zeros((2, 2, 1))}, truth)]
+    with np.testing.assert_raises_regex(ValueError, "two-dimensional"):
+        tune_fusion(samples, ["cue"])
