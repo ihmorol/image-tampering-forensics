@@ -3,222 +3,227 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{amsmath}
+\usepackage{graphicx}
 \usepackage{enumitem}
+\usepackage{multirow}
 
+\graphicspath{{figures/}}
 \settopmatter{printacmref=false}
 \renewcommand\footnotetextcopyrightpermission[1]{}
 
 \title[Complementary Cues for Tampering Localization]{Selecting Complementary Classical Cues for Image Tampering Localization}
-
 \author{CSE 4883 Digital Image Processing Project Team}
-\affiliation{%
-  \institution{Department of Computer Science and Engineering, United International University}
-  \city{Dhaka}
-  \country{Bangladesh}}
+\affiliation{\institution{Department of Computer Science and Engineering, United International University}\city{Dhaka}\country{Bangladesh}}
 
 \begin{abstract}
-Image tampering can leave several weak traces, but a single forensic cue may fail when the edit does not match its assumptions. This work studies whether a small combination of classical cues can improve both tampering detection and region localization. Instead of fixing the final detector set in advance, we compare a candidate pool based on duplicated content, JPEG compression history, geometric resampling, and JPEG block-grid inconsistency. Each detector produces an interpretable suspicion map. The maps are normalized, fused with validation-only parameters, and converted into a binary mask. The central evaluation compares every candidate cue and cue combination on a controlled dataset with known masks. The study is designed to identify the smallest subset that gives a reliable gain over the strongest individual cue. Results, failure cases, and computational cost will be reported by manipulation type and stress condition.\end{abstract}
-
+Image-tampering detectors are usually specialized. A copy-move detector searches for repeated content, a JPEG detector searches for compression history, and a resampling detector searches for interpolation traces. A detector can therefore fail when an edit does not leave the trace it assumes. This paper studies cue selection rather than assuming a fixed detector set. We compare four classical candidates: SIFT-based duplicated-content matching, a JPEG recompression inconsistency cue, a periodic resampling cue, and an 8$\times$8 block-aligned anomaly cue. Each candidate produces a spatial evidence map. Map normalization, fusion weights, and the decision threshold are fitted on validation data only. A held-out pilot with 40 independent source identities selected JPEG history, resampling, and block-grid evidence, with validation weights 0.25, 0.25, and 0.50. The selected subset reached Dice 0.2062 on the pilot test split. The result is modest and varies by manipulation type, so it is reported as evidence about cue selection under the stated protocol, not as a universal authenticity claim. The repository records public-source provenance, source-disjoint manifests, detector timing, and failure conditions.
+\end{abstract}
 \keywords{image forensics, image tampering, copy-move detection, JPEG artifacts, resampling traces, cue fusion, localization}
 
 \begin{document}
 \maketitle
 
 \section{Introduction}
-This chapter introduces the problem, explains why multiple forensic cues may be useful, and states the research questions and project outcome.
+Image tampering detection has two linked goals: decide whether an image contains an alteration and localize the altered region. The second goal is harder than image-level classification because the evidence is spatial and may be weak. A copied object may preserve the local appearance of the source image. A splice may leave a compression or interpolation mismatch. An object replacement may leave neither trace in a reliable form.
 
-\subsection{Project Overview}
-Image tampering detection asks whether an image contains an intentional alteration and, when possible, where that alteration occurs. The task appears in journalism, legal investigation, scientific publishing, and digital media analysis. It is difficult because different edits leave different traces. A copied region may preserve the same image content while a splice may change compression history or interpolation statistics.
+Classical forensic methods are useful because their evidence can be inspected and their assumptions can be stated. Their specialization is also a limitation. SIFT matching is suitable for duplicated content but does not measure JPEG history. JPEG ghost analysis is conditional on a useful compression history. Resampling analysis is conditional on interpolation. Combining such cues may help, but adding cues can also add redundant false positives and computational cost.
 
-This project studies an interpretable classical pipeline for detecting suspicious regions. The system does not claim to prove that an arbitrary image is authentic. It produces evidence maps and reports the conditions under which those maps agree or fail.
+This paper asks a narrow and testable question: does a validation-selected subset of classical evidence maps improve localization over the strongest individual cue under a fixed data protocol? The study treats the candidate set as an experimental variable. It does not assume that three cues, or all available cues, are complementary.
 
-\subsection{Motivation}
-Many classical detectors are specialized. SIFT matching is useful for copy-move edits, but it does not directly test JPEG history. JPEG ghosts can expose recompression differences, but they are not expected to detect every copy-move edit. Resampling traces provide a different signal for resized or rotated content, yet they may be absent when an edit uses no interpolation. These differences suggest a controlled fusion study, but they also make it unsafe to combine cues without measuring redundancy and failure cases.
-
-\subsection{Objectives}
-The project has four objectives:
+Our contributions are fourfold:
 \begin{enumerate}[leftmargin=*]
-  \item implement modular classical detectors that produce spatial suspicion maps;
-  \item select a small cue subset from distinct evidence domains using validation-only ablations;
-  \item compare single cues, cue pairs, the selected subset, and the full candidate pool using detection and localization metrics; and
-  \item document computational cost, stress-test behavior, and known failure cases.
+  \item a candidate-pool formulation that separates duplicated-content, compression, geometric, and block-aligned evidence;
+  \item a validation-only subset and weight-selection protocol with explicit handling of unavailable cues;
+  \item a reproducible implementation with source-disjoint manifests, deterministic stress transforms, machine-readable reports, and detector timing; and
+  \item a measured pilot result that shows both the selected subset and its limitations instead of claiming universal superiority.
 \end{enumerate}
 
-The research questions are:
-\begin{description}[leftmargin=!,labelwidth=1.2cm]
-  \item[RQ1] Does fusing complementary classical cues improve tampering detection and localization over the strongest individual cue?
-  \item[RQ2] Which smallest cue subset gives a reliable gain across manipulation types and image conditions?
-\end{description}
-
-\subsection{Methodology}
-The candidate pool contains four cues. A duplicated-content detector uses SIFT correspondences and geometric verification. A compression-history detector uses JPEG ghost or double-compression evidence when the input supports it. A resampling detector searches for periodic interpolation traces. A block-grid detector measures local inconsistencies in JPEG's 8x8 structure. Each map is robustly normalized before fusion. Equal weighting is the baseline; nonnegative weights, thresholds, and morphological settings are selected on the validation split only.
-
-\subsection{Project Outcome}
-The expected outcome is a reproducible command-line system that saves each evidence map, the fused map, the final localization mask, timing information, and a static HTML summary. The scientific outcome is a measured answer about cue complementarity, not a universal authenticity test.
-
-\subsection{Organization of the Report}
-Section 2 gives the background and literature review. Section 3 describes requirements, the candidate detectors, the fusion rule, and the evaluation design. Section 4 records implementation and results; the current draft marks result fields as pending until the implementation branch is evaluated. Section 5 discusses standards, constraints, cost, and complex engineering criteria. Section 6 states the limitations and future work.
-
-\section{Background}
-This chapter defines the forensic setting, reviews related research, and identifies the gap addressed by the project.
-
-\subsection{Preliminaries}
-Let $I$ be an input image and $M$ its ground-truth tampering mask. A detector produces a map $S_k(x,y)\in[0,1]$ for cue $k$, where larger values indicate stronger local evidence. The final system produces a fused map $F$ and a binary mask $\widehat{M}$ after thresholding and morphological cleanup. These maps are evidence scores, not calibrated probabilities.
-
-\subsection{Literature Review}
-\subsubsection{Similar Applications}
-Practical forensic tools commonly inspect duplicated content, compression history, or local inconsistencies. Their shared limitation is that each tool is strongest under a subset of manipulation conditions. The proposed work focuses on a static, reproducible course-project pipeline rather than a web service or an un-audited authenticity score.
-
-\subsubsection{Related Research}
-Copy-move research established the use of repeated local content for forgery detection. Fridrich et al. introduced a foundational copy-move formulation \cite{fridrich2003}. Amerini et al. combined SIFT matching with transformation recovery, which motivates geometric verification before writing a suspicion map \cite{amerini2011}. Christlein et al. showed that copy-move performance changes with image content and attack transformations \cite{christlein2012}.
-
-JPEG-based methods exploit a different trace. Farid's JPEG ghost method tests recompression inconsistencies across quality factors \cite{farid2009}. Fan and de Queiroz studied compression-history identification and quantizer estimation \cite{fan2003}. Bianchi and Piva localized JPEG inconsistencies at block level \cite{bianchi2012}. Recent JPEG-aware localization work confirms that compression conditions must be treated as an experimental factor \cite{wang2022,verma2023}.
-
-Resampling methods provide a third evidence domain. Popescu and Farid detected periodic traces caused by interpolation and geometric editing \cite{popescu2005}. This cue is complementary in principle, but it is conditional: a manipulation may leave no measurable resampling trace. A survey of blind forgery detection methods provides the broader taxonomy and reinforces the need to state detector assumptions explicitly \cite{qazi2013}.
-
-\subsection{Gap Analysis}
-The literature contains strong individual cues, but it does not make the smallest useful combination obvious for this controlled setting. JPEG ghosts and block-grid statistics may be correlated because both depend on compression history. Copy-move and resampling cues rely on different mechanisms, but either may be absent for a given edit. Therefore, the gap addressed here is an empirical one: a fair, interpretable comparison of candidate cue subsets under the same data split, localization metrics, stress conditions, and computational budget.
-
-\subsection{Summary}
-The review leads to a candidate-pool design. The final detector set is selected by incremental validation gain and robustness, not by assuming that every available cue is complementary.
-
-\section{Project Design}
-This chapter specifies the system requirements, detector design, evaluation protocol, and project plan.
-
-\subsection{Requirement Analysis}
-\subsubsection{Functional and Nonfunctional Requirements}
-The system shall load an image, standardize its size and color representation, run every applicable detector, save individual maps, fuse maps, produce a binary mask, and write a report. It shall preserve the source image and ground-truth mask. It shall also record cue availability and runtime. The implementation shall use classical image processing only, run from the command line, keep detector modules independently testable, and avoid test-set tuning.
-
-\subsubsection{Context Diagram}
-The project has three external inputs: source images, manipulation parameters, and ground-truth masks. The pipeline consumes these inputs and produces evidence maps, localization masks, metrics, and reports. The evaluator is the only component allowed to read the ground-truth mask during scoring.
-
-\subsubsection{Data Flow Diagram Level 1}
 \begin{figure}[t]
   \centering
-  \fbox{\parbox{0.92\linewidth}{\centering
-  source image $\rightarrow$ preprocessing $\rightarrow$ candidate detectors\\[2pt]
-  detector maps $\rightarrow$ normalization and fusion $\rightarrow$ mask\\[2pt]
-  mask plus ground truth $\rightarrow$ metrics and static report}}
-  \caption{The planned evidence-map pipeline. Ground-truth masks are used only by the evaluation stage.}
+  \includegraphics[width=\linewidth]{pipeline.png}
+  \caption{Working order of the proposed study. Ground-truth masks are read only by the evaluation stage. Cue selection and score calibration are completed before the held-out test is opened.}
   \label{fig:pipeline}
 \end{figure}
 
-\subsubsection{UI Design}
-The project has no web interface. The user interface is a command-line entry point with explicit input, output, detector, and evaluation arguments. Static HTML reports provide visual inspection without creating a backend or online service.
+\section{Related Work}
+\subsection{Duplicated content}
+Fridrich et al. formulated copy-move detection as the search for repeated image regions \cite{fridrich2003}. Amerini et al. used SIFT correspondences and transformation recovery, motivating geometric verification before accepting a match \cite{amerini2011}. Christlein et al. showed that copy-move performance changes with image content and manipulation type \cite{christlein2012}. The COVERAGE database further demonstrates that natural images can contain similar genuine objects that resemble copied regions \cite{wen2016}. These works motivate both the SIFT candidate and the use of negative controls.
 
-\subsection{Detailed Methodology and Design}
-\subsubsection{Input Standardization}
-The pipeline converts inputs to a consistent color representation and limits the maximum image dimension. It retains the original compression format and records the image metadata needed to determine whether JPEG-history analysis is applicable.
+\subsection{Compression history and JPEG structure}
+Farid's JPEG ghost method tests recompression responses at candidate quality factors and relates local error minima to prior JPEG compression \cite{farid2009}. Fan and de Queiroz studied compression-history identification and quantizer estimation \cite{fan2003}. Bianchi and Piva used block-grained JPEG artifacts for localization \cite{bianchi2012}. More recent JPEG-aware work treats compression as an experimental condition rather than a nuisance that can be ignored \cite{wang2022,verma2023}. Our JPEG candidate is therefore described as a pixel-domain recompression approximation, and our block candidate is described as a block-aligned anomaly heuristic.
 
-\subsubsection{Duplicated-Content Cue}
-The detector extracts SIFT keypoints and descriptors. It applies a ratio test and mutual consistency check, then estimates an affine relation with RANSAC. Accepted matched regions are written into a spatial map using scale-aware Gaussian support. Matches that collapse into a small neighborhood are suppressed to reduce texture-driven false positives.
+\subsection{Resampling traces}
+Popescu and Farid showed that interpolation can create periodic correlations that are detectable in local image regions \cite{popescu2005}. This evidence is mechanistically different from duplicated content and compression history, but it is conditional. An edit without resizing, rotation, or warping may not produce a measurable resampling trace. The survey by Qazi et al. places these cues within a broader passive-forensics taxonomy and supports reporting detector assumptions explicitly \cite{qazi2013}.
 
-\subsubsection{Compression-History Cue}
-For JPEG-compatible inputs, the detector recompresses the image at a documented set of candidate quality factors and measures robust local differences from the input. The resulting quality-response statistic is converted into a map of likely recompression inconsistencies. If JPEG history is unavailable, the report marks the cue as unavailable instead of treating missing evidence as evidence of authenticity.
+\subsection{Comparison with the proposed study}
+Table~\ref{tab:related} states the relation between prior work and the present study. The contribution is not a new descriptor. It is an auditable selection experiment in which the smallest useful cue subset is measured under one fixed protocol.
 
-\subsubsection{Resampling Cue}
-The resampling detector estimates local prediction errors and searches for periodic correlations associated with interpolation. The map is spatially smoothed only with parameters fixed before test evaluation. The detector is interpreted as evidence of geometric editing, not as a general splice detector.
+\begin{table}[t]
+\caption{Literature-to-method mapping.}\label{tab:related}\small
+\begin{tabular}{p{0.19\linewidth}p{0.29\linewidth}p{0.42\linewidth}}
+\toprule Evidence domain & Representative work & Use and boundary in this study \\
+\midrule
+Duplicated content & Fridrich et al.; Amerini et al.; Christlein et al. & SIFT matching with affine RANSAC. Tested against repeated natural structure; not treated as a general splice detector. \\
+JPEG history & Farid; Fan and de Queiroz & Candidate-quality recompression response. Available only when JPEG history is preserved; implemented as an approximation. \\
+JPEG block structure & Bianchi and Piva; Verma et al. & 8$\times$8 DCT and boundary anomaly. Ablation candidate because it may overlap with JPEG history. \\
+Resampling & Popescu and Farid & Local periodicity screening. Interpreted as geometric-edit evidence, not universal tamper evidence. \\
+Cue selection & This work & Validation-only subset ranking, held-out evaluation, availability tracking, and runtime reporting. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsubsection{Block-Grid Cue}
-The block-grid candidate measures local changes in statistics aligned with 8x8 JPEG blocks. It is retained only if its validation-set contribution remains after the compression-history cue is present. This design makes redundancy an explicit experimental result.
+\section{Research Questions and Study Design}
+The study uses two research questions:
+\begin{description}[leftmargin=!,labelwidth=1.2cm]
+  \item[RQ1] Does fusion improve localization over the strongest individual cue under the same split and threshold-selection protocol?
+  \item[RQ2] Which smallest cue subset provides the best validation score without relying on unavailable or redundant evidence?
+\end{description}
 
-\subsubsection{Normalization and Fusion}
-Each available map is scaled with robust percentiles computed on the validation split. The equal-weight baseline is
+The main hypothesis is conditional: cues from different evidence domains may reduce different error types, while two compression-related cues may be redundant. The hypothesis is tested by ablation, not asserted from detector names.
+
+\subsection{Working order}
+The experiment follows this order:
+\begin{enumerate}[leftmargin=*]
+  \item register sources, masks, manipulation type, format, and source identity;
+  \item assign source identities to train, validation, and test before generating related variants;
+  \item run every applicable candidate detector and record availability and runtime;
+  \item fit map normalization, nonnegative weights, and threshold on validation data;
+  \item rank every candidate subset by validation Dice, then by subset size and runtime;
+  \item freeze the selected subset and evaluate it once on held-out data; and
+  \item report results by manipulation type, stress condition, and failure mode.
+\end{enumerate}
+
+\subsection{Dataset provenance}
+The controlled pilot uses deterministic source identities and known masks. Public-data support is prepared for CoMoFoD and COVERAGE. CoMoFoD provides original images, forged images, binary masks, and post-processing variants. COVERAGE provides original-forged pairs with duplicated and forged region masks and explicitly includes similar genuine objects. Official CoMoFoD examples are included for sanity checking, while quantitative benchmark evaluation requires the full licensed archive and its binary masks.
+
+\begin{table}[t]
+\caption{Data sources used or prepared for the study.}\label{tab:data}\small
+\begin{tabular}{p{0.19\linewidth}p{0.24\linewidth}p{0.44\linewidth}}
+\toprule Source & Role & Evidence boundary \\
+\midrule
+Controlled pilot & Weight and subset protocol & 40 independent seeds, four manipulation types, JPEG quality 88, known masks; pilot evidence only. \\
+CoMoFoD examples & Detector sanity check & Official original/forged examples; no binary masks on the example page, so no localization score is reported. \\
+CoMoFoD full release & Planned benchmark & Official archive contains binary masks and post-processing variants; local licensed extraction is required. \\
+COVERAGE & Planned copy-move benchmark & Author-controlled archive with similar-genuine-object controls and region masks. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Method}
+\subsection{Input standardization}
+Each image is converted to RGB and grayscale representations. EXIF orientation is applied before analysis. The original format, original size, processed size, resize factor, and JPEG availability are stored in the detector result. JPEG-specific candidates are marked unavailable after a geometry-changing resize. An unavailable cue contributes no score and cannot contribute to fitted normalization statistics.
+
+\subsection{Candidate cues}
+\paragraph{Duplicated-content cue.} SIFT keypoints and descriptors are extracted. Descriptor matches are filtered by a ratio test and minimum spatial separation. An affine partial transform is estimated with RANSAC. Only sufficiently supported inliers produce evidence. The output map is formed from inlier points and their convex hulls, then smoothed. This map identifies repeated-content evidence; it does not identify all splices.
+
+\paragraph{JPEG recompression cue.} For a JPEG input that has not been resized, the image is recompressed at a fixed set of quality factors. Local squared pixel error is aggregated over a window. The quality response and its local disagreement are converted into a normalized suspicion map. This implements the observable pixel-domain part of the JPEG-ghost idea, but it is not claimed to reproduce every DCT-domain detail of Farid's method.
+
+\paragraph{Resampling cue.} A second-difference residual is calculated. Local FFT spectra are searched for strong noncentral periodic peaks. The local responses are smoothed and normalized. The output is interpreted as interpolation evidence. It is not expected to respond to every object replacement or splice.
+
+\paragraph{Block-aligned cue.} The grayscale image is divided into 8$\times$8 blocks. High-frequency DCT energy and block-boundary differences are measured. Robust median/MAD scores produce a block-aligned anomaly map. This cue is an ablation heuristic and is retained only when it adds validation value beyond compression-history evidence.
+
+\subsection{Normalization and fusion}
+For cue $k$, validation percentiles $(a_k,b_k)$ define
 \begin{equation}
-  F(x,y)=\frac{1}{|A|}\sum_{k\in A} S_k(x,y),
+  \widetilde{S}_k(x,y)=\operatorname{clip}\left(\frac{S_k(x,y)-a_k}{b_k-a_k},0,1\right).
 \end{equation}
-where $A$ is the set of available cues. A second validation-only variant learns nonnegative weights $w_k$ with $\sum_k w_k=1$. The same validation protocol selects the map threshold and morphological cleanup settings. The test split is not used for any of these choices.
+For the available cue set $A$, the equal-weight baseline is
+\begin{equation}
+  F_{\mathrm{eq}}(x,y)=\frac{1}{|A|}\sum_{k\in A}\widetilde{S}_k(x,y).
+\end{equation}
+The tuned variant uses nonnegative weights satisfying $\sum_{k\in A}w_k=1$:
+\begin{equation}
+  F(x,y)=\sum_{k\in A}w_k\widetilde{S}_k(x,y).
+\end{equation}
+If a cue is unavailable for one image, the active weights are renormalized over the remaining cues. A threshold produces the binary mask. The implementation records the selected weights, threshold, normalization values, availability, and runtime.
 
-\subsubsection{Localization and Evaluation}
-The fused map is thresholded and cleaned with connected-component and morphology rules fixed on validation data. We report pixel precision, recall, F1, IoU, and Dice. We also report image-level detection, cue runtime, end-to-end runtime, and results by manipulation type. Paired bootstrap intervals will quantify uncertainty in differences between the strongest single cue and each fusion variant.
+\subsection{Subset selection}
+Every nonempty subset of the candidate pool is evaluated on validation data. A coarse simplex grid supplies candidate weights. The selection rule is lexicographic: maximize validation Dice, prefer the smaller subset within a tie, then prefer lower runtime. The test split is not used in this decision.
 
-\subsection{Project Plan}
-The project is organized into four stages: literature and protocol approval; controlled data generation; detector and fusion implementation; and held-out evaluation with report generation. No implementation result is used to tune the manuscript's claims before the corresponding experiment is recorded.
-
-\subsection{Task Allocation}
-The work is divided into literature and protocol review, detector implementation, dataset and evaluation tooling, and independent verification. Each contribution is checked against the shared requirements and the validation-only tuning rule.
-
-\subsection{Summary}
-The design treats cue selection as the main scientific variable. It preserves the interpretability of classical detectors while making complementarity measurable.
+\subsection{Evaluation measures}
+For prediction $P$ and ground-truth mask $M$, the study reports precision, recall, F1, IoU, and Dice. Runtime is reported per detector and for the complete pipeline. Public benchmark experiments will add paired bootstrap intervals for the difference between the selected subset and the strongest individual cue. Stress conditions include recompression, resizing, blur, and additive noise.
 
 \section{Implementation and Results}
-This chapter will contain the implementation evidence. The current manuscript is a pre-experiment draft, so it records the protocol without inventing measurements.
+\subsection{Implementation}
+The system is implemented in Python using OpenCV, NumPy, SciPy, Pillow, and scikit-learn-compatible numerical tools. The command-line entry point stores maps as NumPy arrays and writes JSON and static HTML summaries. The test suite contains detector, fusion, manifest, perturbation, and mask-geometry checks.
 
-\subsection{Environment Setup}
-The planned implementation uses Python with OpenCV, NumPy, scikit-image, Pillow, SciPy, Matplotlib, and scikit-learn for metrics and confidence intervals. The command-line environment, package versions, image dimension limit, random seeds, and output schema will be recorded with each evaluation run.
+\subsection{Pilot protocol}
+The pilot contains 40 independently seeded images: 10 copy-move, 10 splicing, 10 object replacement, and 10 geometric-edit samples. All images are saved as JPEG at quality 88. Four images per manipulation type are used for validation and eight for the held-out pilot test. The source identities are disjoint across the two splits. The pilot verifies the experimental workflow and exposes detector behavior; it is not a substitute for the complete public benchmark.
 
-\subsection{Testing and Evaluation}
-The dataset will contain 30--50 source images and approximately 120--200 altered images. It will include copy-move, splicing, object removal, geometric edits, and recompression cases with a binary mask for each localized change. Source images will be split before manipulation generation so related images do not cross the validation and test boundary.
+\subsection{Cue-subset result}
+Validation selected JPEG history, resampling, and block-grid evidence with weights 0.25, 0.25, and 0.50. The full four-cue pool reached the same validation score but was rejected by the minimum-subset rule. Figure~\ref{fig:ablation} shows the leading subset comparison.
 
-The evaluation will include individual cues, all pairwise combinations, the selected subset, and the full candidate pool. Stress tests will apply JPEG recompression, resizing, Gaussian blur, and additive Gaussian noise. The primary comparison is the difference between the strongest individual cue and each fusion variant on the held-out test split.
+\begin{figure}[t]
+  \centering\includegraphics[width=0.96\linewidth]{pilot_ablation.png}
+  \caption{Leading validation subsets in the controlled pilot. The full pool tied the selected subset, so the smaller subset was retained. This is a pilot ablation, not a benchmark comparison with published methods.}\label{fig:ablation}
+\end{figure}
 
-\subsection{Results and Discussion}
-The final version will report numerical results in compact tables and show representative evidence maps. No result is reported in this draft. The discussion will separate improvements that are consistent across manipulation types from improvements caused by one cue-specific subset. It will also report cases where fusion increases false positives or adds runtime without improving localization.
+\begin{table}[t]
+\caption{Pilot validation subset ranking.}\label{tab:ablation}\small
+\begin{tabular}{lcc}\toprule
+Subset & Validation Dice & Decision \\
+\midrule
+JPEG + resampling + block & 0.1875 & selected \\
+Copy + JPEG + resampling + block & 0.1875 & tied; larger \\
+Copy + resampling + block & 0.1822 & not selected \\
+Resampling + block & 0.1787 & not selected \\
+Block only & 0.1761 & not selected \\
+\bottomrule\end{tabular}
+\end{table}
 
-\subsection{Summary}
-The results chapter is deliberately incomplete until the implementation branch produces reproducible held-out measurements. This prevents planned behavior from being presented as observed evidence.
+\subsection{Held-out pilot result}
+The selected subset obtained mean Dice 0.2062 on the held-out pilot. Figure~\ref{fig:types} shows the per-manipulation variation. Copy-move and object replacement were weaker than splicing and geometric editing. This pattern is consistent with the conditional nature of the cues: a compression or interpolation signal does not necessarily identify a copied or replaced region.
 
-\section{Standards and Design Constraints}
-This chapter records the standards and practical constraints that shape the project.
+\begin{figure}[t]
+  \centering\includegraphics[width=0.92\linewidth]{pilot_by_manipulation.png}
+  \caption{Held-out pilot Dice by manipulation type. The variation is a result, not an artifact to hide: the selected compression and resampling cues are not uniformly effective.}\label{fig:types}
+\end{figure}
 
-\subsection{Compliance with the Standards}
-\subsubsection{Software Standards}
-The implementation will use version-controlled Python modules, deterministic seeds, documented command-line arguments, and machine-readable summaries. Each detector will expose a stable map interface so it can be evaluated independently.
+\begin{table}[t]
+\caption{Held-out pilot Dice and mean detector time for 128$\times$128 images.}\label{tab:pilot}\small
+\begin{tabular}{lcc}\toprule
+Manipulation & Dice & N \\
+\midrule
+Copy-move & 0.1355 & 8 \\
+Splicing & 0.2890 & 8 \\
+Object replacement & 0.1218 & 8 \\
+Geometric edit & 0.2785 & 8 \\
+Overall & 0.2062 & 32 \\
+\midrule
+\multicolumn{3}{l}{Mean detector time (ms): SIFT 4.3; JPEG 11.4; resampling 98.4; block 7.7.}\\
+\bottomrule\end{tabular}
+\end{table}
 
-\subsubsection{Hardware Standards}
-The system is designed for a general university workstation and does not require a GPU. Memory use and runtime will be recorded because a more complex cue set is not automatically better for a small forensic workflow.
+\subsection{Public example and failure boundary}
+Figure~\ref{fig:comofod} shows one official CoMoFoD original/forged pair and a pixel-difference view. The examples were downloaded from the official VCL site. They are useful for checking that public image content is readable by the pipeline, but the example page does not provide binary masks. They are therefore not used to claim localization accuracy.
 
-\subsubsection{Communication Standards}
-The pipeline uses local files and command-line arguments. Reports use portable PNG, JSON, CSV, and HTML outputs. No external service is required during evaluation.
+\begin{figure}[t]
+  \centering\includegraphics[width=\linewidth]{comofod_example.png}
+  \caption{Official CoMoFoD example pair. The difference view is included for visual context only and is not a ground-truth mask. Quantitative evaluation requires the official binary mask files.}\label{fig:comofod}
+\end{figure}
 
-\subsection{Design Constraints}
-\subsubsection{Economic Constraint}
-The project uses open-source software and locally generated data. It does not require commercial forensic software or paid cloud inference.
+\subsection{Interpretation}
+The pilot answers the procedural part of RQ2: a validation-only protocol can select a smaller subset when the full candidate pool ties it. It does not answer whether the subset is superior on natural public data. The pilot score is modest, and no confidence interval was estimated for this initial run. A publication-scale claim requires complete CoMoFoD or COVERAGE masks, paired uncertainty intervals, stress-condition results, and comparison with the strongest individual cue.
 
-\subsubsection{Environmental Constraint}
-The evaluation should avoid unnecessary repeated runs. Cached detector maps and fixed experiment manifests will reduce repeated computation.
+\section{Reproducibility and Engineering Constraints}
+\subsection{Reproducibility record}
+The repository records detector parameters, source identifiers, split assignments, cue availability, normalization statistics, weights, thresholds, runtime, and output maps. Public-source papers and provenance notes are stored in the references directory. Remote image or mask URLs are rejected by the manifest loader so that an evaluation cannot silently change when an external file changes.
 
-\subsubsection{Ethical Constraint}
-The output is a suspicion map, not a legal or factual declaration that an image is authentic or inauthentic. The report must state uncertainty and failure cases.
+\subsection{Engineering constraints}
+The system uses classical image processing only and runs without a GPU. The design avoids learned fusion because the study asks which interpretable evidence domains add value. The main cost is the resampling cue, which is slower than the other candidates in the pilot. This cost is recorded so that a small gain cannot be treated as free.
 
-\subsubsection{Health, Safety, Social, and Political Constraints}
-The project does not process personal data as a requirement. If illustrative images contain people, the dataset and report must respect licensing and privacy restrictions. Results must not be framed as automatic evidence for high-stakes decisions.
-
-\subsubsection{Sustainability}
-The method favors small classical modules that can run on ordinary hardware and be inspected by students. The same constraint limits the scope of the detector set.
-
-\subsection{Cost Analysis}
-The expected software cost is zero because the planned packages are open source. The main costs are storage, computation time, and student labor. A larger cue pool would increase runtime and maintenance, so the smallest validated subset is preferred.
-
-\subsection{Complex Engineering Problem}
-The project combines conflicting requirements: diverse manipulation types, incomplete cue availability, localization accuracy, interpretable evidence, and limited computational resources. The design addresses this through modular detectors, validation-only selection, held-out testing, and explicit failure reporting.
-
-\subsubsection{Complex Problem Solving}
-The work requires knowledge of image processing, numerical evaluation, experimental design, and the interaction between compression and geometric artifacts. The problem is not solved by selecting the largest possible detector set because redundant cues can increase false positives and runtime.
-
-\subsubsection{Engineering Activities}
-The engineering activities include data generation, algorithm implementation, reproducibility control, metric design, runtime measurement, and review of the final evidence maps. Each activity has a recorded input, output, and verification step.
-
-\subsection{Summary}
-The project is constrained to classical, interpretable, local computation. These constraints are part of the research question because they make cue selection and evidence reporting important.
+\subsection{Threats to validity}
+The pilot generator is not a natural-image benchmark. The JPEG cue is an approximation of the published JPEG-ghost procedure. The block cue is a heuristic and may be correlated with JPEG history. The public example images lack masks in the downloaded page. These limitations are explicit boundaries on the conclusions, not implementation details that can be ignored.
 
 \section{Conclusion}
-This chapter summarizes the proposed study and states its boundaries.
+This paper presents a measurement protocol for selecting a small set of classical image-forensics cues. The candidate pool covers duplicated content, compression history, interpolation traces, and block-aligned anomalies. A validation-only pilot selected JPEG history, resampling, and block-grid evidence, but the held-out Dice score was modest and varied by manipulation type. The result supports the need for cue ablation and careful availability handling. It does not support a universal claim that the selected subset detects arbitrary tampering.
 
-\subsection{Summary}
-This work proposes a controlled study of complementary classical cues for image-tampering detection and localization. The candidate pool spans duplicated content, JPEG compression history, resampling traces, and block-grid inconsistencies. The final cue subset will be selected from validation-only ablations and compared with the strongest individual cue on held-out data.
-
-\subsection{Limitation}
-The study uses controlled manipulations and a finite image collection. JPEG-history cues are not equally meaningful for all image formats. SIFT and resampling cues may fail when the image contains weak texture or when the edit leaves no measurable interpolation trace. These boundaries prevent the method from being interpreted as a general authenticity proof.
-
-\subsection{Future Work}
-Future work can test public benchmark datasets, richer camera and editing histories, and additional classical cues. Any extension should preserve the same separation between validation tuning and held-out evaluation.
+The next required experiment is a source-disjoint evaluation on the complete licensed CoMoFoD or COVERAGE release with binary masks, stress variants, and paired uncertainty intervals. Until that experiment is complete, the correct interpretation is a reproducible pilot and a defensible protocol for the final benchmark study.
 
 \begin{acks}
-This draft follows the project requirements and the provided section-by-section report guide. The literature records were checked against DOI metadata where available.
+The project follows the provided ACM manuscript template and section-by-section writing guide. Literature files and public examples are retained with provenance notes. No result is presented as a universal authenticity test.
 \end{acks}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
-
 \end{document}
