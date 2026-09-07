@@ -47,9 +47,7 @@ These decisions supersede the ones above where they conflict. The evidence is in
   lifted for resampling, CFA and noise cues.** The pilot already shipped a
   resampling cue in violation of the original constraint (finding F1), and the
   chosen dataset is uncompressed, which makes camera-pipeline cues the
-  applicable evidence family. PRNU remains excluded because it needs a
-  per-camera reference estimated from images of that camera, which would make
-  the method camera-dependent rather than training-free.
+  applicable evidence family.
 - **The prohibition on deep learning and trained classifiers stands.** The target
   is the best training-free system, and every parameter must be fixed by a
   documented rule or chosen on validation data.
@@ -66,3 +64,49 @@ These decisions supersede the ones above where they conflict. The evidence is in
   behaviour of the system is unmeasured (finding A6).
 - **No result may be reported unless a committed script reproduces it**, and the
   command must be recorded.
+
+## PRNU and the evaluation target (2026-09-07, supersedes the PRNU exclusion above)
+
+An earlier amendment on this page excluded PRNU on the grounds that it needs a
+per-camera reference and would make the method camera-dependent. That exclusion
+is withdrawn, for a reason established from the literature rather than from
+preference.
+
+The published training-free results on this exact benchmark are, from
+`korus2016_random-fields.pdf` Fig. 2 (max F1, verified against the PDF):
+
+| Method | max F1 |
+|---|---:|
+| CFA alone | 0.44 |
+| PRNU alone | 0.49 |
+| Naive pixel-wise fusion (sum / product / disjunction / empirical) | 0.57 to 0.61 |
+| Grid CRF | 0.69 |
+| Dense CRF | 0.68 |
+
+The headline 0.69 fuses CFA with PRNU. Excluding PRNU while evaluating on a
+dataset that ships PRNU signatures would make our numbers incomparable with the
+published baseline for a reason that is ours, not the data's.
+
+**Two configurations will therefore be built and reported separately.**
+
+1. **Blind configuration (primary).** No camera knowledge of any kind. This is
+   the system whose applicability claim is "works on any image". Its honest
+   comparison point is the individual blind cues and the naive fusion row above.
+2. **PRNU-augmented configuration (comparison only).** Adds the dataset's
+   per-camera signatures as one further cue, solely so that a like-for-like
+   comparison with the published 0.69 is possible. Its applicability claim is
+   explicitly narrower: it requires reference images from the source camera.
+
+Neither configuration's number may be reported without stating which one it is.
+
+**Pre-registered target.** The stated success criterion, fixed before any result
+is seen, is to match the published grid-CRF level of max F1 approximately 0.67
+to 0.69 on the Korus realistic tampering dataset.
+
+**Pre-registered failure clause.** This target is aspirational, and the blind
+configuration begins from a weaker cue set than the published one: CFA alone is
+0.44 and the published fusion leans on PRNU. If either configuration falls short
+of the target, the shortfall is reported as a shortfall, in the abstract and the
+results section, with the measured number. The target is not adjusted after the
+fact, the comparison is not moved to a friendlier baseline, and the claim is not
+softened into a vaguer one. A missed target is a result.
