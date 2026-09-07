@@ -1,8 +1,16 @@
 # Project Workspace Guidance
 
-This repository is documentation-only until the project requirements are approved. Do not add implementation code, tests, datasets, generated outputs, or dependency changes unless a later project decision explicitly authorizes them.
+This repository contains implementation code, tests and experiment records.
+Keep project decisions and requirements in the documentation files under this
+repository. Use short, plain, professional sentences.
 
-Keep project decisions and requirements in the documentation files under this repository. Use short, plain, professional sentences.
+Large datasets live under `data/` and are git-ignored. Never commit dataset
+archives or extracted image corpora.
+
+Every reported number must be reproducible by a committed script, and the
+command that produced it must be recorded. Do not state a result that has not
+been run. Findings that turn out to be wrong are retracted in place rather than
+quietly edited away.
 
 ## Agent skills
 

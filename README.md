@@ -12,7 +12,9 @@ advance.
 
 ## Documents
 
-- `PROJECT_HANDOFF.md` gives the approved project direction.
+- `docs/audit-prior-work.md` records the reproducible defect analysis of the
+  pilot study and is the starting point for the current work.
+- `PROJECT_HANDOFF.md` gives the original project direction.
 - `docs/requirements.md` defines the scope, deliverables, constraints, and
   acceptance criteria.
 - `docs/decisions.md` records important design decisions as the team makes them.
