@@ -253,13 +253,33 @@ than a hull over sparse keypoints.
 `christlein2012` (read in full) supplies the comparative evidence for which
 descriptor families hold up under which manipulations and is cited for that.
 
-### 4.4 Residual co-occurrence anomaly (blind cue)
+### 4.4 Residual co-occurrence anomaly: DROPPED
 
-Splicebuster-style: high-pass residual, quantised co-occurrence features per
-block, two-component model fitted on the image itself, anomaly map. Specification
-pending the completion of `references/notes/noise-cfa.md`. **If the method cannot
-be specified from a source we have actually read, it is dropped from the cue pool
-and its absence is stated** — it is not reconstructed from memory.
+This cue was planned as a Splicebuster-style detector: high-pass residual,
+quantised co-occurrence features per block, a two-component model fitted on the
+image itself, and an anomaly map. Section 4.4 of the first draft of this document
+committed in advance to dropping it if it could not be specified from a source we
+had actually read. **It could not be, so it is dropped.**
+
+What was established (`references/notes/noise-cfa.md`, `cozzolino2015` entry):
+the WIFS 2015 paper is closed access at every location checked (Unpaywall, IEEE,
+ACM, ResearchGate), and the GRIP lab's own code download links return 404 and are
+not archived. The nearest readable source by the same authors, arXiv:1703.04615,
+describes the same residual co-occurrence feature family but has an SVM back-end,
+not Splicebuster's unsupervised EM, so it does not supply the mechanism we need.
+Its own title confirms the mismatch: it recasts these descriptors as
+convolutional neural networks, which our training-free constraint excludes
+outright.
+
+Reconstructing the EM decision stage from recollection is exactly the failure
+mode this project's rules forbid. The cue is therefore absent from the pool, and
+its absence is stated in the manuscript rather than papered over. The blind
+configuration proceeds with four cues: CFA, noise level, copy-move, resampling.
+
+INFERENCE, recorded as a limitation and not acted on: an anomaly cue over residual
+co-occurrence features is plausibly complementary to the four retained cues, so
+its absence probably costs us some performance against the pre-registered target.
+That is a cost of the evidence standard, and it is reported as such.
 
 ### 4.5 Resampling (blind cue, repaired)
 
