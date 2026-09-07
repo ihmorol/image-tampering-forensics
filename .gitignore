@@ -10,6 +10,10 @@ data/generated/
 reports/generated/
 outputs/
 references/datasets/pilot_jpeg/
+writings/final-review-render/
+writings/qa-render/
+writings/qa-render2/
+writings/*-render*/
 .env
 .omo
 node_modules
