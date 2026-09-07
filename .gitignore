@@ -17,3 +17,6 @@ writings/*-render*/
 .env
 .omo
 node_modules
+
+# Local datasets (large, not vendored)
+data/
