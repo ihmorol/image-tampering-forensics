@@ -21,8 +21,11 @@ or selected on validation data.
 
 | Configuration | Cues | Applicability claim |
 |---|---|---|
-| **Blind** (primary) | CFA, noise level, copy-move, residual anomaly, resampling | Any image. No camera knowledge. |
+| **Blind** (primary) | CFA, noise level, copy-move, resampling | Any image. No camera knowledge. |
 | **PRNU-augmented** (comparison) | Blind cues + PRNU | Requires reference images from the source camera. |
+
+A fifth cue, residual co-occurrence anomaly, was planned and then dropped
+because it could not be specified from a source we had read; see Section 4.4.
 
 **Pre-registered target.** Max F1 of 0.67 to 0.69 on the Korus realistic
 tampering dataset, matching the published grid-CRF result
