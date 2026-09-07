@@ -3,13 +3,18 @@
 Planning repository for the CSE 4883 Digital Image Processing course project,
 Summer 2026.
 
-The proposed system will detect and localize image tampering by combining three
-classical forensic cues: SIFT copy-move matching, JPEG ghost analysis, and JPEG
-block-grid inconsistency analysis. No implementation has started yet.
+The proposed system studies whether a small, complementary set of classical
+forensic cues can improve tampering detection and localization. The candidate
+pool contains SIFT duplicated-content matching, JPEG compression-history
+evidence, classical resampling traces, and JPEG block-grid anomalies. Validation
+ablations select the smallest useful subset; the final subset is not fixed in
+advance.
 
 ## Documents
 
-- `PROJECT_HANDOFF.md` gives the approved project direction.
+- `docs/audit-prior-work.md` records the reproducible defect analysis of the
+  pilot study and is the starting point for the current work.
+- `PROJECT_HANDOFF.md` gives the original project direction.
 - `docs/requirements.md` defines the scope, deliverables, constraints, and
   acceptance criteria.
 - `docs/decisions.md` records important design decisions as the team makes them.
@@ -24,5 +29,7 @@ implements, and the critic verifies. They exchange plans, task briefs, coder
 reports, and critic verdicts in the formats defined in
 `docs/agents/contracts.md`.
 
-This repository is intentionally documentation-only until the team approves the
-requirements and implementation plan.
+The requirements and implementation decision are recorded in
+`docs/decisions.md`. The repository contains a reproducible research prototype
+and tests; generated datasets and evaluation outputs remain local artifacts
+unless explicitly added.
