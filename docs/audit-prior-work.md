@@ -19,6 +19,39 @@ Severity follows the project ladder: P0 blocks any published claim, P1 breaks a
 stated acceptance criterion, P2 is a defect that does not by itself invalidate a
 result.
 
+**Correction notice.** A first version of this document claimed that the
+manuscript's cue subset "cannot arise from the committed code" because the
+committed generator writes PNG, which makes both JPEG cues unavailable. That
+claim was wrong and is retracted; see F0 and the retraction under B3. The
+published pilot images are JPEG, so all four cues are available on them. The
+controlling finding A2 is unaffected and has been recomputed on the genuine
+pilot data.
+
+---
+
+## F0. Provenance of the published pilot (Executed)
+
+Forty images sit at `references/datasets/pilot_jpeg/`, at 128x128 in JPEG
+format. They are git-ignored (`.gitignore:12`), so they are on disk but absent
+from version control, and **no masks and no manifest accompany them**.
+
+Testing them against the generator establishes their provenance exactly. All
+**40 of 40** are pixel-identical to
+
+```
+generate_sample(seed=4883+i, size=(128, 128), kind=kinds[i % 4])  ->  JPEG quality 88
+```
+
+with `kinds = [copy_move, splicing, object_removal, geometric_edit]`. The
+manuscript's description of its data — 40 seeds, four manipulation types,
+128x128, JPEG quality 88 — is therefore **accurate**.
+
+Two consequences follow. First, the published pilot can be reconstructed
+exactly, and this document's quantitative findings are computed on that
+reconstruction rather than on a substitute. Second, the ground-truth masks are
+`generate_sample(...).mask` for the same seeds, so every defect in Section A
+applies directly to the data behind the published numbers.
+
 ---
 
 ## A. Benchmark validity
@@ -36,22 +69,23 @@ share the other. Every mask covers an identical 4.79 % of the frame.
 
 Because of A1, the mask can be predicted from the manipulation prior alone. A
 constant mask, fitted only on the train and validation mask frequency and then
-applied blind to the held-out test split, scores:
+applied blind to the held-out test split, scores, **on the reconstructed
+published pilot** (128x128, JPEG quality 88, per F0):
 
 | Predictor | Held-out test Dice |
 |---|---:|
 | Constant mask, ignores image content entirely | **0.6667** |
-| Committed forensic pipeline (`copy_move` + `resampling`) | **0.1376** |
+| Committed pipeline, all four cues available | **0.2537** |
+| Manuscript's reported held-out result | 0.2062 |
 
-The complete forensic system scores **4.8x worse than not looking at the image**.
-No conclusion about cue quality, cue complementarity, or fusion can be drawn
-from this benchmark. This invalidates the pilot's central experimental claim,
-not merely its magnitude.
+The complete forensic system scores **2.6x worse than not looking at the image**.
+Against the manuscript's own reported figure the ratio is 3.2x. No conclusion
+about cue quality, cue complementarity, or fusion can be drawn from this
+benchmark. This invalidates the pilot's central experimental claim, not merely
+its magnitude.
 
-The manuscript reports 0.2062 for a different cue subset on a differently
-configured run (see B1-B3); that run is not reproducible from the repository, so
-the two numbers are not directly comparable. The constant-mask result does not
-depend on which configuration was used, because A1 holds at every image size.
+The constant-mask figure is identical (0.6667) on the committed generator's
+256x256 PNG output, because A1 holds at every image size and format.
 
 ### A3 (P0, Read) Copy-move ground truth contradicts the copy-move detector
 
@@ -96,14 +130,23 @@ imagery that contains none of it does not test the hypothesis the study states.
 
 ## B. Reproducibility of the published numbers
 
-### B1 (P0, Discrepancy) Image size and format do not match
+### B1 (P1, Executed) The committed generator does not reproduce the published data
 
-- `docs/experiment-results.md`: images were "encoded as JPEG at quality 88"; the
-  manuscript Table 4 caption reads "for 128 x 128 images".
-- The committed generator writes **256x256 PNG** (`generate_dataset.py:16`-`17`;
-  `generate_sample` defaults to `size=(256, 256)` at `dataset.py:136`, and the
-  script exposes no size flag). There is no JPEG encoding step anywhere in the
-  committed generator.
+The manuscript's description of the data is correct (F0), but the committed
+generator cannot produce it:
+
+- `scripts/generate_dataset.py:16` calls `generate_sample` without a `size`
+  argument, so it uses the default `size=(256, 256)` (`dataset.py:136`), and the
+  script exposes no size flag.
+- `generate_dataset.py:17` saves PNG. There is no JPEG encoding step anywhere in
+  the committed generator, although `apply_perturbation` can encode JPEG
+  (`dataset.py:120`-`127`) and is never called by any committed script.
+
+Running the committed generator therefore yields 256x256 PNG, on which both JPEG
+cues are unavailable and the pipeline behaves differently (Dice 0.1376 rather
+than 0.2537). The recipe that produced the published images — size 128, quality
+88 — is recorded nowhere in the repository. It was recovered for this audit only
+by brute-force matching against the generator.
 
 ### B2 (P1, Discrepancy) Split sizes do not match and are internally inconsistent
 
@@ -116,14 +159,37 @@ imagery that contains none of it does not test the hypothesis the study states.
   between one and three images per type in the test split
   (`dataset.py:82`-`95`, hash-bucketed at 20 %/20 %).
 
-### B3 (P0, Executed) The reported cue subset cannot arise from the committed code
+### B3 RETRACTED
 
-Both JPEG cues return `available=False` for non-JPEG input
-(`detectors.py:181`-`188`, `detectors.py:292`-`299`). On the committed PNG
-output, `jpeg_history` and `block_grid` are unavailable for **40 of 40 images**.
-The manuscript's selected subset is `jpeg_history + resampling + block_grid` —
-two of whose three members are structurally unavailable on the data the
-committed generator produces.
+An earlier version of this finding claimed the manuscript's cue subset could not
+arise from the committed code, on the grounds that both JPEG cues are
+unavailable for non-JPEG input (`detectors.py:181`-`188`,
+`detectors.py:292`-`299`) and the committed generator writes PNG. That reasoning
+applies only to the committed generator's output, not to the published pilot
+images, which are JPEG (F0). On the real pilot data **all four cues are
+available for 40 of 40 images**. The claim was wrong and is withdrawn.
+
+What remains true is the narrower B1: the committed generator does not produce
+the published data.
+
+### B3a (P1, Executed) The published selection is not reproduced by the committed code
+
+Reconstructing the published pilot exactly and running the committed selection
+and evaluation path gives:
+
+| Quantity | Reconstruction | Manuscript |
+|---|---|---|
+| Selected subset | `copy_move + resampling + block_grid` | `jpeg_history + resampling + block_grid` |
+| Validation Dice | 0.2314 | 0.1875 |
+| Held-out Dice | 0.2537 | 0.2062 |
+
+The data is identical, so the difference must come from the split. The committed
+hash-based splitter (`dataset.py:82`-`95`, 20 %/20 %) yields train 22 /
+validation 11 / test 7, whereas `docs/experiment-results.md` describes four
+validation and eight test images per manipulation type. The split actually used
+for the published run is not recorded anywhere, and the described split is not
+self-consistent (B2). The published selection and scores therefore remain
+unreproduced.
 
 ### B4 (P1, Read) No committed script produces the layout the evaluator consumes
 
@@ -137,10 +203,12 @@ that is not in the repository.
 No command line, seed, environment capture, or run manifest is stored for the
 numbers in `docs/experiment-results.md` or the manuscript.
 
-**Consequence.** Findings B1 through B5 mean the manuscript's headline numbers
-(validation Dice 0.1875, held-out Dice 0.2062, the per-manipulation table, and
-the detector timings) cannot be regenerated from this repository. They should be
-treated as unverified until the experiment is rebuilt.
+**Consequence.** The pilot *images* are exactly reproducible (F0), but the
+published *results* are not. The selected subset, the validation Dice of 0.1875,
+the held-out Dice of 0.2062, the per-manipulation table and the detector timings
+cannot be regenerated from this repository, because the split used is unrecorded
+and the driver that produced them is absent. They should be treated as
+unverified until the experiment is rebuilt.
 
 ---
 
@@ -306,13 +374,14 @@ Both are false on the implementation branch.
 | Class | P0 | P1 | P2 |
 |---|---:|---:|---:|
 | A. Benchmark validity | 4 | 2 | 0 |
-| B. Reproducibility | 2 | 3 | 0 |
+| B. Reproducibility | 0 | 5 | 0 |
 | C. Method/manuscript mismatch | 1 | 1 | 1 |
 | D. Detector defects | 2 | 3 | 2 |
 | E. Evaluation defects | 2 | 3 | 1 |
 | F. Scope and documentation | 0 | 1 | 1 |
 
-The controlling finding is A2. The benchmark rewards a constant mask more than it
+The controlling finding is A2, and it is computed on the genuine published pilot
+data rather than a substitute. The benchmark rewards a constant mask more than it
 rewards the forensic system, so the pilot measures the geometry of its own
 generator rather than the quality of any forensic cue. Fixing the fusion layer or
 adding cues on top of this benchmark would produce numbers that remain

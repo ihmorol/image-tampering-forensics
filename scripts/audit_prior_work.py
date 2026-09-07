@@ -10,6 +10,8 @@ The script writes nothing into the repository.
 from __future__ import annotations
 
 import argparse
+import hashlib
+import io
 import json
 import subprocess
 import sys
@@ -19,15 +21,72 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from tamper_fusion.dataset import generate_sample
+from tamper_fusion.dataset import assign_source_disjoint_splits, generate_sample
 from tamper_fusion.detectors import run_candidate_detectors
 from tamper_fusion.fusion import evaluate_subsets, fuse_maps
 from tamper_fusion.metrics import mask_metrics
+
+PILOT_KINDS = ("copy_move", "splicing", "object_removal", "geometric_edit")
+PILOT_SEED = 4883
+PILOT_SIZE = (128, 128)
+PILOT_QUALITY = 88
+PILOT_IMAGES = Path("references/datasets/pilot_jpeg")
 
 
 def dice(prediction: np.ndarray, truth: np.ndarray) -> float:
     denominator = int(prediction.sum()) + int(truth.sum())
     return 2 * int((prediction & truth).sum()) / denominator if denominator else 1.0
+
+
+def finding_pilot_provenance() -> bool:
+    """F0: establish what the published pilot images actually are.
+
+    The 40 images in references/datasets/pilot_jpeg are git-ignored, so they are
+    on disk but not in version control, and no masks or manifest accompany them.
+    This check tests, pixel by pixel, whether they are the output of the
+    committed generator at 128x128 re-encoded as JPEG quality 88.
+    """
+    print("\n[F0] provenance of the published pilot images")
+    if not PILOT_IMAGES.is_dir():
+        print(f"  {PILOT_IMAGES} not present; skipping (these files are git-ignored)")
+        return False
+    exact = 0
+    for index in range(40):
+        path = PILOT_IMAGES / f"{index:03d}.jpg"
+        if not path.is_file():
+            continue
+        stored = np.asarray(Image.open(path).convert("RGB"), dtype=float)
+        sample = generate_sample(PILOT_SEED + index, size=PILOT_SIZE,
+                                 kind=PILOT_KINDS[index % 4])
+        buffer = io.BytesIO()
+        Image.fromarray(sample.image).save(buffer, format="JPEG", quality=PILOT_QUALITY)
+        buffer.seek(0)
+        rebuilt = np.asarray(Image.open(buffer).convert("RGB"), dtype=float)
+        exact += int(np.array_equal(stored, rebuilt))
+    print(f"  pixel-exact matches to generate_sample(seed=4883+i, size=(128,128),"
+          f" kind=kinds[i%4]) -> JPEG q{PILOT_QUALITY}: {exact}/40")
+    print("  masks or manifest present alongside the images: "
+          f"{any(PILOT_IMAGES.glob('*mask*')) or (PILOT_IMAGES / 'manifest.json').exists()}")
+    return exact == 40
+
+
+def build_true_pilot(destination: Path) -> Path:
+    """Reconstruct the published pilot exactly: 128x128, JPEG quality 88."""
+    destination.mkdir(parents=True, exist_ok=True)
+    rows = []
+    for index in range(40):
+        kind = PILOT_KINDS[index % 4]
+        sample = generate_sample(PILOT_SEED + index, size=PILOT_SIZE, kind=kind)
+        stem = f"{index:03d}"
+        Image.fromarray(sample.image).save(destination / f"{stem}.jpg",
+                                           format="JPEG", quality=PILOT_QUALITY)
+        Image.fromarray(sample.mask.astype(np.uint8) * 255).save(destination / f"{stem}_mask.png")
+        rows.append({"image": f"{stem}.jpg", "mask": f"{stem}_mask.png", "kind": kind,
+                     "source_id": f"synthetic-source-{index}"})
+    records = assign_source_disjoint_splits(rows, validation_fraction=0.2, test_fraction=0.2)
+    (destination / "manifest.json").write_text(
+        json.dumps([r.__dict__ for r in records], indent=2), encoding="utf-8")
+    return destination
 
 
 def finding_mask_geometry_is_seed_independent() -> None:
@@ -125,18 +184,32 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=4883)
     args = parser.parse_args()
 
-    dataset = args.workdir / "pilot"
-    dataset.mkdir(parents=True, exist_ok=True)
+    committed = args.workdir / "committed-generator"
+    committed.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        [sys.executable, "scripts/generate_dataset.py", "--output", str(dataset),
+        [sys.executable, "scripts/generate_dataset.py", "--output", str(committed),
          "--count", str(args.count), "--seed", str(args.seed)],
         check=True,
     )
 
-    finding_dataset_format(dataset)
+    finding_pilot_provenance()
+    finding_dataset_format(committed)
     finding_mask_geometry_is_seed_independent()
-    finding_constant_mask_baseline(dataset)
-    finding_pipeline_on_committed_generator(dataset)
+
+    print("\n" + "=" * 72)
+    print("The remaining findings are computed on the RECONSTRUCTED PUBLISHED PILOT")
+    print("(128x128, JPEG quality 88), not on the committed generator's output.")
+    print("=" * 72)
+    pilot = build_true_pilot(args.workdir / "true-pilot")
+    finding_constant_mask_baseline(pilot)
+    finding_pipeline_on_committed_generator(pilot)
+
+    print("\n" + "=" * 72)
+    print("For contrast, the same two findings on the COMMITTED GENERATOR output")
+    print("(256x256, PNG), where both JPEG cues are structurally unavailable.")
+    print("=" * 72)
+    finding_constant_mask_baseline(committed)
+    finding_pipeline_on_committed_generator(committed)
     return 0
 
 
